@@ -115,15 +115,14 @@ export default function MemoryGame({ level, onLevelComplete, onGameOver }: GameP
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      padding: '12px',
+      padding: '12px 10px',
       height: '100%',
       gap: '10px',
     }}>
       {/* Stats row */}
       <div style={{
         display: 'flex',
-        gap: '8px',
-        flexWrap: 'wrap',
+        gap: '6px',
         justifyContent: 'center',
         width: '100%',
       }}>
@@ -133,19 +132,31 @@ export default function MemoryGame({ level, onLevelComplete, onGameOver }: GameP
           { label: 'Temps', value: formatTime(elapsed), icon: '⏱', color: 'var(--text-primary)' },
         ].map(({ label, value, icon, color }) => (
           <div key={label} style={{
-            background: 'rgba(255,255,255,0.04)',
+            flex: 1,
+            background: 'rgba(255,255,255,0.05)',
             border: '1px solid var(--border-color)',
-            borderRadius: '20px',
-            padding: '5px 12px',
+            borderRadius: '14px',
+            padding: '6px 8px',
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            gap: '5px',
+            gap: '1px',
           }}>
-            <span style={{ fontSize: '14px' }}>{icon}</span>
-            <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{label}</span>
-            <strong style={{ color, fontSize: '14px' }}>{value}</strong>
+            <span style={{ fontSize: '16px', lineHeight: 1 }}>{icon}</span>
+            <strong style={{ color, fontSize: '15px', lineHeight: 1.2 }}>{value}</strong>
+            <span style={{ color: 'var(--text-muted)', fontSize: '10px' }}>{label}</span>
           </div>
         ))}
+      </div>
+
+      {/* Progress bar */}
+      <div style={{ width: '100%', padding: '0 2px' }}>
+        <div className="memory-progress-bar">
+          <div
+            className="memory-progress-fill"
+            style={{ width: `${total > 0 ? (matched / total) * 100 : 0}%` }}
+          />
+        </div>
       </div>
 
       {/* Grid — fixed pixel sizing avoids overflow/stretch issues on mobile */}
@@ -153,47 +164,61 @@ export default function MemoryGame({ level, onLevelComplete, onGameOver }: GameP
         display: 'grid',
         gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`,
         gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
-        gap: '6px',
+        gap: '7px',
+        flex: 1,
+        alignContent: 'center',
       }}>
         {cards.map((card) => (
           <button
             key={card.id}
             onClick={() => handleCardClick(card.id)}
             className="memory-card"
+            data-matched={card.matched || undefined}
             style={{
               width: `${cellSize}px`,
               height: `${cellSize}px`,
-              borderRadius: '10px',
+              borderRadius: '14px',
               border: '2px solid',
               borderColor: card.matched
                 ? 'var(--rasta-green)'
                 : card.flipped
                 ? 'var(--rasta-gold)'
-                : 'var(--border-color)',
+                : 'rgba(255,255,255,0.12)',
+              boxShadow: card.matched
+                ? '0 0 10px rgba(50,205,50,0.35)'
+                : card.flipped
+                ? '0 0 10px rgba(255,215,0,0.25)'
+                : '0 2px 8px rgba(0,0,0,0.4)',
               WebkitTapHighlightColor: 'transparent',
               cursor: card.matched || card.flipped ? 'default' : 'pointer',
             }}
           >
-            <div className={`memory-card-inner${card.flipped || card.matched ? ' is-flipped' : ''}`}>
+            <div className={`memory-card-inner${card.flipped || card.matched ? ' is-flipped' : ''}${card.matched ? ' is-matched' : ''}`}>
               {/* Front (hidden face) */}
               <div
                 className="memory-card-face"
                 style={{
-                  background: 'linear-gradient(145deg, var(--bg-card), #0f2010)',
-                  color: 'var(--border-color)',
-                  fontSize: `${Math.max(fontSize - 4, 14)}px`,
-                  fontWeight: 900,
+                  background: 'linear-gradient(145deg, #12250f, #0a1a09)',
+                  flexDirection: 'column',
+                  gap: '1px',
                 }}
               >
-                ?
+                <span style={{ fontSize: `${Math.max(fontSize - 6, 12)}px`, opacity: 0.18, lineHeight: 1 }}>🌲</span>
+                <span style={{
+                  color: 'rgba(255,255,255,0.28)',
+                  fontSize: `${Math.max(fontSize - 4, 13)}px`,
+                  fontWeight: 900,
+                  lineHeight: 1,
+                  fontFamily: 'monospace',
+                }}>?</span>
               </div>
               {/* Back (emoji face) */}
               <div
                 className="memory-card-face memory-card-back"
                 style={{
                   background: card.matched
-                    ? 'linear-gradient(145deg, rgba(34,139,34,0.35), rgba(34,139,34,0.15))'
-                    : 'linear-gradient(145deg, rgba(255,215,0,0.18), rgba(255,165,0,0.08))',
+                    ? 'linear-gradient(145deg, rgba(34,139,34,0.4), rgba(20,90,20,0.25))'
+                    : 'linear-gradient(145deg, rgba(255,215,0,0.15), rgba(180,120,0,0.08))',
                   fontSize: `${fontSize}px`,
                 }}
               >
