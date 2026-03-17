@@ -11,8 +11,24 @@ export default function MemoryGame({ level, onLevelComplete, onGameOver }: GameP
   const [moves, setMoves] = useState(0);
   const [locked, setLocked] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [cellSize, setCellSize] = useState(60);
   const startRef = useRef(Date.now());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const { rows, cols } = GRID_CONFIG[level];
+
+  // Calculate cell size dynamically based on viewport — same approach as Tetris/Match3
+  useEffect(() => {
+    const calc = () => {
+      const availW = window.innerWidth - 24; // 12px padding each side
+      const availH = window.innerHeight - 180; // HUD ~56px + stats row ~44px + padding
+      const size = Math.floor(Math.min(availW / cols, availH / rows, 80));
+      setCellSize(Math.max(size, 44)); // minimum 44px for touch targets
+    };
+    calc();
+    window.addEventListener('resize', calc);
+    return () => window.removeEventListener('resize', calc);
+  }, [cols, rows]);
 
   useEffect(() => {
     setCards(buildDeck(level));
@@ -31,7 +47,7 @@ export default function MemoryGame({ level, onLevelComplete, onGameOver }: GameP
     };
   }, [level]);
 
-  // Separate effect to handle pair check — no side-effects in state updaters
+  // Pair check effect
   useEffect(() => {
     if (selected.length !== 2) return;
 
@@ -59,7 +75,7 @@ export default function MemoryGame({ level, onLevelComplete, onGameOver }: GameP
     return () => clearTimeout(timer);
   }, [selected]);
 
-  // Win condition — safe to call onLevelComplete here, outside a state updater
+  // Win condition
   useEffect(() => {
     if (cards.length > 0 && cards.every((c) => c.matched)) {
       if (timerRef.current) clearInterval(timerRef.current);
@@ -77,7 +93,6 @@ export default function MemoryGame({ level, onLevelComplete, onGameOver }: GameP
     });
 
     setSelected((prev) => {
-      // Guard: ignore already-selected or already-matched/flipped cards
       if (prev.includes(id)) return prev;
       return [...prev, id];
     });
@@ -89,7 +104,9 @@ export default function MemoryGame({ level, onLevelComplete, onGameOver }: GameP
     return m > 0 ? `${m}m${sec.toString().padStart(2, '0')}` : `${sec}s`;
   };
 
-  const { rows, cols } = GRID_CONFIG[level];
+  const matched = cards.filter((c) => c.matched).length / 2;
+  const total = cards.length / 2;
+  const fontSize = Math.max(Math.floor(cellSize * 0.42), 16);
 
   if (cards.length === 0) return null;
 
@@ -102,22 +119,41 @@ export default function MemoryGame({ level, onLevelComplete, onGameOver }: GameP
       height: '100%',
       gap: '10px',
     }}>
-      <div style={{ color: 'var(--text-muted)', fontSize: '13px', display: 'flex', gap: '14px', flexWrap: 'wrap', justifyContent: 'center' }}>
-        <span>🎯 Coups : <strong style={{ color: 'var(--rasta-gold)' }}>{moves}</strong></span>
-        <span>Paires : <strong style={{ color: 'var(--rasta-green-light)' }}>
-          {cards.filter((c) => c.matched).length / 2} / {cards.length / 2}
-        </strong></span>
-        <span>⏱ <strong style={{ color: 'var(--text-primary)' }}>{formatTime(elapsed)}</strong></span>
+      {/* Stats row */}
+      <div style={{
+        display: 'flex',
+        gap: '8px',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        width: '100%',
+      }}>
+        {[
+          { label: 'Coups', value: moves, icon: '🎯', color: 'var(--rasta-gold)' },
+          { label: 'Paires', value: `${matched}/${total}`, icon: '🃏', color: 'var(--rasta-green-light)' },
+          { label: 'Temps', value: formatTime(elapsed), icon: '⏱', color: 'var(--text-primary)' },
+        ].map(({ label, value, icon, color }) => (
+          <div key={label} style={{
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '20px',
+            padding: '5px 12px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '5px',
+          }}>
+            <span style={{ fontSize: '14px' }}>{icon}</span>
+            <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>{label}</span>
+            <strong style={{ color, fontSize: '14px' }}>{value}</strong>
+          </div>
+        ))}
       </div>
 
+      {/* Grid — fixed pixel sizing avoids overflow/stretch issues on mobile */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: `repeat(${cols}, 1fr)`,
-        gridTemplateRows: `repeat(${rows}, 1fr)`,
+        gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`,
+        gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
         gap: '6px',
-        width: '100%',
-        flex: 1,
-        maxWidth: `${cols * 62}px`,
       }}>
         {cards.map((card) => (
           <button
@@ -125,7 +161,8 @@ export default function MemoryGame({ level, onLevelComplete, onGameOver }: GameP
             onClick={() => handleCardClick(card.id)}
             className="memory-card"
             style={{
-              aspectRatio: '1',
+              width: `${cellSize}px`,
+              height: `${cellSize}px`,
               borderRadius: '10px',
               border: '2px solid',
               borderColor: card.matched
@@ -138,18 +175,26 @@ export default function MemoryGame({ level, onLevelComplete, onGameOver }: GameP
             }}
           >
             <div className={`memory-card-inner${card.flipped || card.matched ? ' is-flipped' : ''}`}>
+              {/* Front (hidden face) */}
               <div
                 className="memory-card-face"
-                style={{ background: 'var(--bg-card)', color: 'var(--text-muted)', fontWeight: 700 }}
+                style={{
+                  background: 'linear-gradient(145deg, var(--bg-card), #0f2010)',
+                  color: 'var(--border-color)',
+                  fontSize: `${Math.max(fontSize - 4, 14)}px`,
+                  fontWeight: 900,
+                }}
               >
                 ?
               </div>
+              {/* Back (emoji face) */}
               <div
                 className="memory-card-face memory-card-back"
                 style={{
                   background: card.matched
-                    ? 'rgba(34,139,34,0.25)'
-                    : 'rgba(255,215,0,0.12)',
+                    ? 'linear-gradient(145deg, rgba(34,139,34,0.35), rgba(34,139,34,0.15))'
+                    : 'linear-gradient(145deg, rgba(255,215,0,0.18), rgba(255,165,0,0.08))',
+                  fontSize: `${fontSize}px`,
                 }}
               >
                 {card.emoji}
