@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="fr">
       <body>
         {/* Page content with bottom nav spacing */}
-        <div style={{ paddingBottom: '65px', minHeight: '100dvh' }}>
+        <div style={{ paddingBottom: '74px', minHeight: '100dvh' }}>
           {children}
         </div>
         <BottomNav />

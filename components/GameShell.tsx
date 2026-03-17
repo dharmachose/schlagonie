@@ -42,7 +42,6 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
     if (timerRef.current) clearInterval(timerRef.current);
     setState('win');
     recordCompletion(gameId, level, ms);
-    // Submit to leaderboard API
     if (player) {
       fetch('/api/scores', {
         method: 'POST',
@@ -80,23 +79,41 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
             background: 'none',
             border: 'none',
             color: 'var(--rasta-red)',
-            fontSize: '22px',
+            fontSize: '24px',
             cursor: 'pointer',
-            padding: '4px',
+            padding: '6px',
             WebkitTapHighlightColor: 'transparent',
+            lineHeight: 1,
           }}
         >
           ✕
         </button>
+
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: '15px', color: 'var(--text-secondary)', fontWeight: 700 }}>
             {gameEmoji} {gameTitle}
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--rasta-green-light)' }}>
+          <div style={{
+            fontSize: '12px',
+            color: 'var(--rasta-green-light)',
+            marginTop: '2px',
+            background: 'rgba(50,205,50,0.12)',
+            borderRadius: '10px',
+            padding: '1px 8px',
+            display: 'inline-block',
+          }}>
             {LEVEL_LABELS[level]}
           </div>
         </div>
-        <div style={{ fontFamily: 'monospace', color: 'var(--rasta-gold)', fontSize: '16px', fontWeight: 700 }}>
+
+        <div style={{
+          fontFamily: 'monospace',
+          color: 'var(--rasta-gold)',
+          fontSize: '20px',
+          fontWeight: 900,
+          letterSpacing: '1px',
+          textShadow: '0 0 12px rgba(255,215,0,0.5)',
+        }}>
           {formatTime(elapsedMs)}
         </div>
       </div>
@@ -109,17 +126,37 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
         {state === 'win' && (
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'rgba(13,26,13,0.92)',
+            background: 'rgba(10, 20, 10, 0.94)',
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
             gap: '20px', padding: '32px',
           }} className="animate-bounce-in">
-            <div style={{ fontSize: '72px' }}>🏆</div>
-            <div style={{ color: 'var(--rasta-gold)', fontSize: '28px', fontWeight: 900, textAlign: 'center' }}>
-              Niveau {level} réussi !
+            <div style={{ fontSize: '80px', lineHeight: 1 }}>🏆</div>
+            <div>
+              <div style={{
+                color: 'var(--rasta-gold)',
+                fontSize: '30px',
+                fontWeight: 900,
+                textAlign: 'center',
+                textShadow: '0 0 20px rgba(255,215,0,0.5)',
+              }}>
+                Niveau {level} réussi !
+              </div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '15px', textAlign: 'center', marginTop: '6px' }}>
+                🌲 La forêt est fière de toi
+              </div>
             </div>
-            <div style={{ color: 'var(--text-secondary)', fontSize: '16px' }}>
-              ⏱️ {formatTime(elapsedMs)}
+            <div style={{
+              background: 'rgba(255,215,0,0.1)',
+              border: '1px solid var(--rasta-gold)',
+              borderRadius: '14px',
+              padding: '12px 28px',
+              color: 'var(--rasta-gold)',
+              fontSize: '22px',
+              fontFamily: 'monospace',
+              fontWeight: 700,
+            }}>
+              ⏱ {formatTime(elapsedMs)}
             </div>
             <div style={{ display: 'flex', gap: '12px', flexDirection: 'column', width: '100%' }}>
               {level < 5 && (
@@ -144,14 +181,25 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
         {state === 'gameover' && (
           <div style={{
             position: 'absolute', inset: 0,
-            background: 'rgba(26,0,0,0.92)',
+            background: 'rgba(20, 5, 5, 0.95)',
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
             gap: '20px', padding: '32px',
           }} className="animate-bounce-in">
-            <div style={{ fontSize: '72px' }}>💀</div>
-            <div style={{ color: 'var(--rasta-red)', fontSize: '28px', fontWeight: 900, textAlign: 'center' }}>
-              Game Over
+            <div style={{ fontSize: '80px', lineHeight: 1 }}>💀</div>
+            <div>
+              <div style={{
+                color: 'var(--rasta-red)',
+                fontSize: '30px',
+                fontWeight: 900,
+                textAlign: 'center',
+                textShadow: '0 0 20px rgba(220,20,60,0.5)',
+              }}>
+                Game Over
+              </div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '15px', textAlign: 'center', marginTop: '6px' }}>
+                Le brouillard des Vosges t&apos;a eu 🌫️
+              </div>
             </div>
             <div style={{ display: 'flex', gap: '12px', flexDirection: 'column', width: '100%' }}>
               <button

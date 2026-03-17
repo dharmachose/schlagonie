@@ -2,15 +2,23 @@ import Link from 'next/link';
 import { LEVEL_LABELS } from '@/lib/games/config';
 import type { DifficultyLevel } from '@/lib/types';
 
-const LEVEL_EMOJIS: Record<DifficultyLevel, string> = {
-  1: '🌱', 2: '🌿', 3: '🌲', 4: '🌳', 5: '🏔️',
-};
+interface LevelSelectPageProps {
+  gameId: string;
+  title: string;
+  description: string;
+  color: string;
+  levelEmojis: Record<DifficultyLevel, string>;
+  levelDetails: Record<DifficultyLevel, string>;
+}
 
-const GRID_SIZES: Record<DifficultyLevel, string> = {
-  1: '3 × 4', 2: '4 × 4', 3: '4 × 5', 4: '5 × 6', 5: '6 × 6',
-};
-
-export default function MemoryPage() {
+export default function LevelSelectPage({
+  gameId,
+  title,
+  description,
+  color,
+  levelEmojis,
+  levelDetails,
+}: LevelSelectPageProps) {
   return (
     <div style={{ padding: '24px 16px', maxWidth: '480px', margin: '0 auto' }}>
       <h1 style={{
@@ -20,16 +28,21 @@ export default function MemoryPage() {
         marginBottom: '8px',
         letterSpacing: '-0.5px',
       }}>
-        🌲 Mémoire des Vosges
+        {title}
       </h1>
       <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px', lineHeight: 1.5 }}>
-        Retrouve toutes les paires cachées dans la forêt vosge avant que le brouillard arrive !
+        {description}
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {([1, 2, 3, 4, 5] as DifficultyLevel[]).map((lvl) => (
-          <Link key={lvl} href={`/games/memory/${lvl}`} className="card-link">
-            <div className="card-vosges" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <Link key={lvl} href={`/games/${gameId}/${lvl}`} className="card-link">
+            <div className="card-vosges" style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '16px',
+              borderColor: `${color}50`,
+            }}>
               <div style={{
                 fontSize: '36px',
                 width: '56px',
@@ -37,19 +50,19 @@ export default function MemoryPage() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                background: 'rgba(34,139,34,0.15)',
+                background: `${color}18`,
                 borderRadius: '14px',
-                border: '1px solid rgba(34,139,34,0.3)',
+                border: `1px solid ${color}40`,
                 flexShrink: 0,
               }}>
-                {LEVEL_EMOJIS[lvl]}
+                {levelEmojis[lvl]}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '16px' }}>
                   Niveau {lvl} — {LEVEL_LABELS[lvl]}
                 </div>
                 <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '3px' }}>
-                  Grille {GRID_SIZES[lvl]}
+                  {levelDetails[lvl]}
                 </div>
               </div>
               <div style={{ color: 'var(--text-muted)', fontSize: '20px', flexShrink: 0 }}>›</div>
