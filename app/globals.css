@@ -112,23 +112,36 @@ body {
 }
 
 /* ===== MEMORY CARD 3D FLIP ===== */
+@keyframes card-matched {
+  0%   { box-shadow: 0 0 0 rgba(50,205,50,0); }
+  40%  { box-shadow: 0 0 18px rgba(50,205,50,0.7), 0 0 40px rgba(50,205,50,0.3); }
+  100% { box-shadow: 0 0 8px rgba(50,205,50,0.35); }
+}
+
 .memory-card {
-  perspective: 600px;
+  perspective: 700px;
   cursor: pointer;
   background: transparent;
   border: none;
   padding: 0;
+  transition: transform 0.12s ease;
+}
+.memory-card:active:not([data-matched]) {
+  transform: scale(0.91);
 }
 .memory-card-inner {
   position: relative;
   width: 100%;
   height: 100%;
   transform-style: preserve-3d;
-  transition: transform 0.35s ease;
-  border-radius: 8px;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px;
 }
 .memory-card-inner.is-flipped {
   transform: rotateY(180deg);
+}
+.memory-card-inner.is-matched {
+  animation: card-matched 0.5s ease-out forwards;
 }
 .memory-card-face {
   position: absolute;
@@ -138,11 +151,26 @@ body {
   justify-content: center;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  border-radius: 8px;
+  border-radius: 12px;
   font-size: clamp(18px, 4vw, 32px);
 }
 .memory-card-back {
   transform: rotateY(180deg);
+}
+
+/* Progress bar */
+.memory-progress-bar {
+  width: 100%;
+  height: 5px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.memory-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--rasta-green), var(--rasta-gold));
+  transition: width 0.4s ease;
 }
 
 .animate-bounce-in { animation: bounce-in 0.4s ease-out; }
