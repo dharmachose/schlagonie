@@ -35,7 +35,7 @@ export const GAMES: GameMeta[] = [
   },
   {
     id: 'joint',
-    title: 'Rouleur des Vosges',
+    title: 'Qui Roule Bamboule',
     emoji: '🌿',
     description: 'Roule le joint parfait le plus vite possible — weed, toncart, OCB, feu !',
     color: '#00C851',

@@ -4,7 +4,7 @@ export default function JointPage() {
   return (
     <LevelSelectPage
       gameId="joint"
-      title="🌿 Rouleur des Vosges"
+      title="🌿 Qui Roule Bamboule"
       description="Roule le joint parfait le plus vite possible. Weed, toncart, OCB, lèche, feu !"
       color="#00C851"
       levelEmojis={{ 1: '🌱', 2: '🌿', 3: '🍃', 4: '🔥', 5: '💨' }}
