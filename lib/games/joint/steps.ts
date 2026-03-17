@@ -37,7 +37,7 @@ export const STEPS: JointStep[] = [
     label: 'Grinder !',
     description: 'Tapes vite pour grinder la weed',
     action: 'rapid-tap',
-    target: 8,
+    target: 12,
     basePoints: 60,
     bonusPoints: 100,
   },
@@ -127,11 +127,11 @@ export const STEPS: JointStep[] = [
 
 /** Speed target (ms) per level: complete within this time to get full bonus */
 export const SPEED_TARGET: Record<DifficultyLevel, number> = {
-  1: 4000,
-  2: 3000,
-  3: 2200,
-  4: 1600,
-  5: 1100,
+  1: 7000,
+  2: 5000,
+  3: 3500,
+  4: 2500,
+  5: 1600,
 };
 
 /**

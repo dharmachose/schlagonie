@@ -129,7 +129,7 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
         setPhase('active');
         stepStartRef.current = Date.now();
       }
-    }, 600);
+    }, 950);
   }, [phase, stepIdx, score, level, onLevelComplete, onGameOver]);
 
   completeStepRef.current = completeStep;
