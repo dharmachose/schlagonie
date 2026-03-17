@@ -28,6 +28,14 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
   currentRef.current = current;
   scoreRef.current = score;
 
+  // Guard against double-lock (hard drop timer + setTimeout race condition)
+  const isLockingRef = useRef(false);
+  // Always points to latest lock (avoids stale closure in setTimeout calls)
+  const lockFnRef = useRef<() => void>(() => {});
+
+  // Reset guard after each successful lock (board changed = lock completed)
+  useEffect(() => { isLockingRef.current = false; }, [board]);
+
   // ResizeObserver: compute cell size from actual available container
   useEffect(() => {
     const el = boardContainerRef.current;
@@ -43,6 +51,10 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
   }, []);
 
   const lock = useCallback(() => {
+    // Prevent double-lock: drop timer + hard-drop setTimeout can both fire
+    if (isLockingRef.current) return;
+    isLockingRef.current = true;
+
     const piece = currentRef.current;
     const b = boardRef.current;
     const newBoard = placePiece(b, piece);
@@ -65,6 +77,9 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
     setCurrent(np);
     setNext(randomPiece());
   }, [next, level, onGameOver, onLevelComplete]);
+
+  // Keep lockFnRef in sync with latest lock (for setTimeout calls)
+  lockFnRef.current = lock;
 
   // Drop timer
   useEffect(() => {
@@ -105,7 +120,7 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
         let r = piece.row;
         while (isValid(b, piece.cells, r + 1, piece.col)) r++;
         setCurrent({ ...piece, row: r });
-        setTimeout(lock, 50);
+        setTimeout(() => lockFnRef.current(), 50);
       }
     };
     window.addEventListener('keydown', handler);
@@ -135,7 +150,7 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
         let r = piece.row;
         while (isValid(b, piece.cells, r + 1, piece.col)) r++;
         setCurrent({ ...piece, row: r });
-        setTimeout(lock, 50);
+        setTimeout(() => lockFnRef.current(), 50);
       } else if (dy < -30) {
         const rotated = rotate(piece.cells);
         if (isValid(b, rotated, piece.row, piece.col)) setCurrent({ ...piece, cells: rotated });
@@ -354,7 +369,7 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
               let r = currentRef.current.row;
               while (isValid(boardRef.current, currentRef.current.cells, r + 1, currentRef.current.col)) r++;
               setCurrent({ ...currentRef.current, row: r });
-              setTimeout(lock, 50);
+              setTimeout(() => lockFnRef.current(), 50);
             }}>⬇</button>
           <button style={btnStyle}
             onClick={() => {

@@ -33,6 +33,14 @@ export const GAMES: GameMeta[] = [
     color: '#DC143C',
     available: true,
   },
+  {
+    id: 'joint',
+    title: 'Qui Roule Bamboule',
+    emoji: '🌿',
+    description: 'Roule le joint parfait le plus vite possible — weed, toncart, OCB, feu !',
+    color: '#00C851',
+    available: true,
+  },
 ];
 
 export const LEVEL_LABELS: Record<number, string> = {
