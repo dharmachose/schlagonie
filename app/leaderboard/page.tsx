@@ -6,6 +6,12 @@ import type { LeaderboardEntry, GameId, DifficultyLevel } from '@/lib/types';
 
 type Tab = 'global' | 'game' | 'speed';
 
+const TABS: { id: Tab; label: string; icon: string }[] = [
+  { id: 'global', label: 'Global', icon: '🌍' },
+  { id: 'game', label: 'Par Jeu', icon: '🎮' },
+  { id: 'speed', label: 'Vitesse', icon: '⚡' },
+];
+
 export default function LeaderboardPage() {
   const [tab, setTab] = useState<Tab>('global');
   const [gameId, setGameId] = useState<GameId>('memory');
@@ -46,54 +52,79 @@ export default function LeaderboardPage() {
     return `#${rank}`;
   };
 
+  const selectStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '12px 14px',
+    borderRadius: '14px',
+    marginBottom: '10px',
+    background: 'var(--bg-card)',
+    border: '1px solid var(--border-color)',
+    color: 'var(--text-primary)',
+    fontSize: '15px',
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    cursor: 'pointer',
+  };
+
   return (
-    <div style={{ padding: '20px 16px', maxWidth: '480px', margin: '0 auto' }}>
-      <h1 style={{ color: 'var(--rasta-gold)', fontSize: '22px', fontWeight: 900, marginBottom: '16px' }}>
+    <div style={{ padding: '24px 16px', maxWidth: '480px', margin: '0 auto' }}>
+      <h1 style={{
+        color: 'var(--rasta-gold)',
+        fontSize: '24px',
+        fontWeight: 900,
+        marginBottom: '20px',
+        letterSpacing: '-0.5px',
+      }}>
         🏆 Classements
       </h1>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-        {(['global', 'game', 'speed'] as Tab[]).map((t) => (
+      <div style={{
+        display: 'flex',
+        gap: '8px',
+        marginBottom: '20px',
+        background: 'var(--bg-card)',
+        padding: '4px',
+        borderRadius: '16px',
+        border: '1px solid var(--border-color)',
+      }}>
+        {TABS.map((t) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={t.id}
+            onClick={() => setTab(t.id)}
             style={{
-              flex: 1, padding: '8px', borderRadius: '10px', border: 'none', cursor: 'pointer',
-              background: tab === t ? 'var(--rasta-green)' : 'var(--bg-card)',
-              color: tab === t ? '#fff' : 'var(--text-muted)',
-              fontWeight: tab === t ? 700 : 400, fontSize: '13px',
+              flex: 1,
+              padding: '10px 6px',
+              borderRadius: '12px',
+              border: 'none',
+              cursor: 'pointer',
+              background: tab === t.id
+                ? 'linear-gradient(135deg, var(--rasta-green), var(--rasta-gold-dark))'
+                : 'transparent',
+              color: tab === t.id ? '#0d1a0d' : 'var(--text-muted)',
+              fontWeight: tab === t.id ? 700 : 400,
+              fontSize: '13px',
+              transition: 'all 0.15s',
               WebkitTapHighlightColor: 'transparent',
             }}
           >
-            {t === 'global' ? '🌍 Global' : t === 'game' ? '🎮 Par Jeu' : '⚡ Vitesse'}
+            <div style={{ fontSize: '16px', marginBottom: '2px' }}>{t.icon}</div>
+            {t.label}
           </button>
         ))}
       </div>
 
       {/* Filters */}
       {(tab === 'game' || tab === 'speed') && (
-        <div style={{ marginBottom: '12px' }}>
-          <select
-            value={gameId}
-            onChange={(e) => setGameId(e.target.value as GameId)}
-            style={{
-              width: '100%', padding: '10px', borderRadius: '10px', marginBottom: '8px',
-              background: 'var(--bg-card)', border: '1px solid var(--border-color)',
-              color: 'var(--text-primary)', fontSize: '14px',
-            }}
-          >
+        <div style={{ marginBottom: '16px' }}>
+          <select value={gameId} onChange={(e) => setGameId(e.target.value as GameId)} style={selectStyle}>
             {GAMES.map((g) => <option key={g.id} value={g.id}>{g.emoji} {g.title}</option>)}
           </select>
           {tab === 'speed' && (
             <select
               value={level}
               onChange={(e) => setLevel(Number(e.target.value) as DifficultyLevel)}
-              style={{
-                width: '100%', padding: '10px', borderRadius: '10px',
-                background: 'var(--bg-card)', border: '1px solid var(--border-color)',
-                color: 'var(--text-primary)', fontSize: '14px',
-              }}
+              style={selectStyle}
             >
               {[1,2,3,4,5].map((l) => <option key={l} value={l}>Niveau {l}</option>)}
             </select>
@@ -103,32 +134,43 @@ export default function LeaderboardPage() {
 
       {/* Entries */}
       {loading ? (
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px', fontSize: '24px' }}>
-          🌲 Chargement...
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '60px 0' }}>
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>🌲</div>
+          <div style={{ fontSize: '15px' }}>Chargement...</div>
         </div>
       ) : entries.length === 0 ? (
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px' }}>
-          <div style={{ fontSize: '40px', marginBottom: '8px' }}>🌫️</div>
-          <div>Personne encore... Sois la première reine !</div>
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '60px 0' }}>
+          <div style={{ fontSize: '48px', marginBottom: '12px' }}>🌫️</div>
+          <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-secondary)' }}>
+            Personne encore...
+          </div>
+          <div style={{ fontSize: '13px', marginTop: '6px' }}>
+            Sois la première reine des Vosges !
+          </div>
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           {entries.map((e) => (
             <div key={`${e.rank}-${e.playerName}`} className={`lb-entry ${rankStyle(e.rank)}`}>
-              <div style={{ fontSize: '20px', minWidth: '32px', textAlign: 'center' }}>
+              <div style={{ fontSize: '22px', minWidth: '36px', textAlign: 'center', fontWeight: 900 }}>
                 {rankEmoji(e.rank)}
               </div>
-              <div style={{ flex: 1, fontWeight: e.rank <= 3 ? 700 : 400, color: 'var(--text-primary)' }}>
+              <div style={{ flex: 1, fontWeight: e.rank <= 3 ? 700 : 400, fontSize: '15px', color: 'var(--text-primary)' }}>
                 {e.playerName}
               </div>
               <div style={{ textAlign: 'right' }}>
                 {tab === 'speed' && e.fastestMs != null ? (
-                  <div style={{ color: 'var(--rasta-gold)', fontWeight: 700, fontFamily: 'monospace' }}>
-                    ⏱️ {formatMs(e.fastestMs)}
+                  <div style={{
+                    color: 'var(--rasta-gold)',
+                    fontWeight: 700,
+                    fontFamily: 'monospace',
+                    fontSize: '15px',
+                  }}>
+                    ⏱ {formatMs(e.fastestMs)}
                   </div>
                 ) : (
-                  <div style={{ color: 'var(--rasta-gold)', fontWeight: 700 }}>
-                    {e.score} pts
+                  <div style={{ color: 'var(--rasta-gold)', fontWeight: 900, fontSize: '18px' }}>
+                    {e.score} <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--text-muted)' }}>pts</span>
                   </div>
                 )}
               </div>

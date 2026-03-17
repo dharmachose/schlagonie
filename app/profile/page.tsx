@@ -15,56 +15,139 @@ export default function ProfilePage() {
   if (!player || editMode) return <PlayerSetup onDone={() => setEditMode(false)} />;
 
   const joinDate = new Date(player.createdAt).toLocaleDateString('fr-FR');
+  const totalLevels = GAMES.length * 5;
+  const progressPct = Math.min((totalPoints / totalLevels) * 100, 100);
 
   return (
-    <div style={{ padding: '20px 16px', maxWidth: '480px', margin: '0 auto' }}>
-      {/* Profile header */}
-      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-        <div style={{ fontSize: '64px', marginBottom: '8px' }}>🌿</div>
-        <h1 style={{ color: 'var(--rasta-gold)', fontSize: '24px', fontWeight: 900 }}>
+    <div style={{ padding: '24px 16px', maxWidth: '480px', margin: '0 auto' }}>
+      {/* Profile hero */}
+      <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+        <div style={{
+          fontSize: '72px',
+          lineHeight: 1,
+          marginBottom: '12px',
+          filter: 'drop-shadow(0 0 16px rgba(50,205,50,0.4))',
+        }}>
+          🌿
+        </div>
+        <h1 style={{
+          color: 'var(--rasta-gold)',
+          fontSize: '28px',
+          fontWeight: 900,
+          letterSpacing: '-0.5px',
+        }}>
           {player.name}
         </h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px' }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '6px' }}>
           Aventurier·e des Vosges depuis le {joinDate}
         </p>
         <button
           onClick={() => setEditMode(true)}
-          style={{ marginTop: '8px', background: 'none', border: '1px solid var(--border-color)', borderRadius: '8px', padding: '4px 12px', color: 'var(--text-muted)', fontSize: '12px', cursor: 'pointer' }}
+          style={{
+            marginTop: '12px',
+            background: 'rgba(255,255,255,0.05)',
+            border: '1px solid var(--border-color)',
+            borderRadius: '20px',
+            padding: '6px 16px',
+            color: 'var(--text-muted)',
+            fontSize: '13px',
+            cursor: 'pointer',
+            WebkitTapHighlightColor: 'transparent',
+          }}
         >
           ✏️ Changer de pseudo
         </button>
       </div>
 
-      {/* Total score */}
+      {/* Total score card */}
       <div className="card-vosges" style={{ textAlign: 'center', marginBottom: '20px' }}>
-        <div style={{ color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '1px' }}>Score Total</div>
-        <div style={{ color: 'var(--rasta-gold)', fontSize: '52px', fontWeight: 900, lineHeight: 1 }}>{totalPoints}</div>
-        <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>points sur 20 possibles</div>
-        <div style={{ marginTop: '8px', height: '6px', background: 'var(--bg-dark)', borderRadius: '3px', overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${(totalPoints / 20) * 100}%`, background: 'linear-gradient(90deg, var(--rasta-green), var(--rasta-gold))', borderRadius: '3px', transition: 'width 0.5s' }} />
+        <div className="section-label" style={{ marginBottom: '8px' }}>Score Total</div>
+        <div style={{
+          color: 'var(--rasta-gold)',
+          fontSize: '60px',
+          fontWeight: 900,
+          lineHeight: 1,
+          textShadow: '0 0 24px rgba(255,215,0,0.4)',
+        }}>
+          {totalPoints}
+        </div>
+        <div style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '4px' }}>
+          points sur {totalLevels} possibles
+        </div>
+        <div style={{
+          marginTop: '14px',
+          height: '8px',
+          background: 'var(--border-color)',
+          borderRadius: '4px',
+          overflow: 'hidden',
+        }}>
+          <div style={{
+            height: '100%',
+            width: `${progressPct}%`,
+            background: 'linear-gradient(90deg, var(--rasta-green), var(--rasta-gold))',
+            borderRadius: '4px',
+            transition: 'width 0.6s ease',
+          }} />
         </div>
       </div>
 
-      {/* Per game stats */}
-      <h2 style={{ color: 'var(--text-secondary)', fontSize: '13px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '10px' }}>
-        Progression par jeu
-      </h2>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '24px' }}>
+      {/* Level count badge */}
+      <div className="card-vosges" style={{ textAlign: 'center', marginBottom: '20px', padding: '14px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
+          <div>
+            <div style={{
+              color: 'var(--rasta-green-light)',
+              fontSize: '36px',
+              fontWeight: 900,
+              lineHeight: 1,
+            }}>
+              {completedLevels.length}
+            </div>
+            <div className="section-label" style={{ marginTop: '4px' }}>Niveaux terminés</div>
+          </div>
+          <div style={{ color: 'var(--border-active)', fontSize: '24px' }}>/</div>
+          <div>
+            <div style={{
+              color: 'var(--text-muted)',
+              fontSize: '36px',
+              fontWeight: 900,
+              lineHeight: 1,
+            }}>
+              {totalLevels}
+            </div>
+            <div className="section-label" style={{ marginTop: '4px' }}>Total</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Per game progression */}
+      <div className="section-label" style={{ marginBottom: '14px' }}>Progression par jeu</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
         {GAMES.map((game) => {
           const pts = getPointsForGame(game.id);
           return (
-            <div key={game.id} className="card-vosges" style={{ padding: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <div style={{ fontWeight: 700, fontSize: '14px' }}>{game.emoji} {game.title}</div>
-                <div style={{ color: game.color, fontWeight: 900 }}>{pts}/5</div>
+            <div key={game.id} className="card-vosges" style={{ padding: '14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '28px' }}>{game.emoji}</span>
+                  <span style={{ fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>
+                    {game.title}
+                  </span>
+                </div>
+                <div style={{ color: game.color, fontWeight: 900, fontSize: '18px' }}>
+                  {pts}<span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 400 }}>/5</span>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: '4px' }}>
+              {/* Level pips */}
+              <div style={{ display: 'flex', gap: '6px' }}>
                 {[1,2,3,4,5].map((l) => {
                   const done = completedLevels.some((c) => c.gameId === game.id && c.level === l);
                   return (
                     <div key={l} style={{
-                      flex: 1, height: '6px', borderRadius: '3px',
-                      background: done ? game.color : 'var(--bg-dark)',
+                      flex: 1, height: '8px', borderRadius: '4px',
+                      background: done ? game.color : 'var(--border-color)',
+                      transition: 'background 0.3s',
+                      boxShadow: done ? `0 0 8px ${game.color}60` : 'none',
                     }} />
                   );
                 })}
@@ -72,14 +155,6 @@ export default function ProfilePage() {
             </div>
           );
         })}
-      </div>
-
-      {/* Completed levels count */}
-      <div className="card-vosges" style={{ textAlign: 'center' }}>
-        <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>Niveaux complétés</div>
-        <div style={{ color: 'var(--rasta-green-light)', fontSize: '28px', fontWeight: 700 }}>
-          {completedLevels.length} <span style={{ fontSize: '16px', color: 'var(--text-muted)' }}>/20</span>
-        </div>
       </div>
     </div>
   );
