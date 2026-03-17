@@ -1,0 +1,16 @@
+{
+  "name": "Schlagonie",
+  "short_name": "Schlagonie",
+  "description": "Le royaume rasta des Vosges — mini-jeux by Shlagonie",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1a0d",
+  "theme_color": "#0d1a0d",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
+    }
+  ]
+}
