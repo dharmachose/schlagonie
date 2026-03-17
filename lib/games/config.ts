@@ -41,6 +41,14 @@ export const GAMES: GameMeta[] = [
     color: '#00C851',
     available: true,
   },
+  {
+    id: 'tower',
+    title: "Défense d'Aydoilles",
+    emoji: '🏰',
+    description: "La Baffe attaque ! Place tes tours et défends la Mairie d'Aydoilles contre les hordes de baffeurs !",
+    color: '#8B6914',
+    available: true,
+  },
 ];
 
 export const LEVEL_LABELS: Record<number, string> = {
