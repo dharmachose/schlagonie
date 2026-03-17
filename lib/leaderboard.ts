@@ -3,15 +3,18 @@ import type { GameId, DifficultyLevel, LeaderboardEntry, LevelCompletion } from 
 import { KV_KEYS } from './types';
 
 // Redis client — env vars set in Vercel dashboard or .env.local
-// UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN
+// Supports both standard Upstash vars and Vercel's custom-prefix vars (STORAGE_SCHLAGONIE_*)
 function getRedis(): Redis | null {
-  if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-    return null;
-  }
-  return new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL,
-    token: process.env.UPSTASH_REDIS_REST_TOKEN,
-  });
+  const url =
+    process.env.STORAGE_SCHLAGONIE_REDIS_REST_URL ||
+    process.env.UPSTASH_REDIS_REST_URL;
+  const token =
+    process.env.STORAGE_SCHLAGONIE_REDIS_REST_TOKEN ||
+    process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!url || !token) return null;
+
+  return new Redis({ url, token });
 }
 
 const TOP_N = 20;
