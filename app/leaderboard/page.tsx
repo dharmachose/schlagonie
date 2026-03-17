@@ -18,15 +18,20 @@ export default function LeaderboardPage() {
   const [level, setLevel] = useState<DifficultyLevel>(1);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [noRedis, setNoRedis] = useState(false);
 
   useEffect(() => {
     setLoading(true);
+    setNoRedis(false);
     let url = '/api/leaderboard?type=global';
     if (tab === 'game') url = `/api/leaderboard?type=game&gameId=${gameId}`;
     if (tab === 'speed') url = `/api/leaderboard?type=speed&gameId=${gameId}&level=${level}`;
 
     fetch(url)
-      .then((r) => r.json())
+      .then((r) => {
+        if (r.status === 503) { setNoRedis(true); return []; }
+        return r.json();
+      })
       .then((data) => setEntries(Array.isArray(data) ? data : []))
       .catch(() => setEntries([]))
       .finally(() => setLoading(false));
@@ -137,6 +142,16 @@ export default function LeaderboardPage() {
         <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '60px 0' }}>
           <div style={{ fontSize: '40px', marginBottom: '12px' }}>🌲</div>
           <div style={{ fontSize: '15px' }}>Chargement...</div>
+        </div>
+      ) : noRedis ? (
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '60px 0' }}>
+          <div style={{ fontSize: '48px', marginBottom: '12px' }}>🔌</div>
+          <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--rasta-red)' }}>
+            Base de données non connectée
+          </div>
+          <div style={{ fontSize: '13px', marginTop: '6px' }}>
+            Configure Vercel KV (Upstash Redis) dans le dashboard Vercel
+          </div>
         </div>
       ) : entries.length === 0 ? (
         <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '60px 0' }}>

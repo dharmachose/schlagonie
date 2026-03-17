@@ -70,7 +70,7 @@ export default function MemoryGame({ level, onLevelComplete, onGameOver }: GameP
       });
       setSelected([]);
       setLocked(false);
-    }, 900);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [selected]);

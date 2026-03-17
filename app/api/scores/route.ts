@@ -10,7 +10,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    await submitScore(body);
+    const saved = await submitScore(body);
+    if (!saved) {
+      return NextResponse.json({ error: 'no_redis' }, { status: 503 });
+    }
 
     return NextResponse.json({ ok: true });
   } catch {

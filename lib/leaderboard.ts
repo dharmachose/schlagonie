@@ -3,12 +3,15 @@ import type { GameId, DifficultyLevel, LeaderboardEntry, LevelCompletion } from 
 import { KV_KEYS } from './types';
 
 // Redis client — env vars set in Vercel dashboard or .env.local
-// Supports both standard Upstash vars and Vercel's custom-prefix vars (STORAGE_SCHLAGONIE_*)
+// Supports Vercel Redis naming variants (db name: redis-schlagonie → STORAGE_REDIS_SCHLAGONIE_*)
+// and standard Upstash vars
 function getRedis(): Redis | null {
   const url =
+    process.env.STORAGE_REDIS_SCHLAGONIE_REDIS_REST_URL ||
     process.env.STORAGE_SCHLAGONIE_REDIS_REST_URL ||
     process.env.UPSTASH_REDIS_REST_URL;
   const token =
+    process.env.STORAGE_REDIS_SCHLAGONIE_REDIS_REST_TOKEN ||
     process.env.STORAGE_SCHLAGONIE_REDIS_REST_TOKEN ||
     process.env.UPSTASH_REDIS_REST_TOKEN;
 
@@ -25,9 +28,12 @@ const TOP_N = 20;
  * - per-game leaderboard
  * - speed leaderboard for that level
  */
-export async function submitScore(completion: LevelCompletion): Promise<void> {
+export async function submitScore(completion: LevelCompletion): Promise<boolean> {
   const redis = getRedis();
-  if (!redis) return; // silently fail if no Redis configured
+  if (!redis) {
+    console.error('[leaderboard] Redis not configured — score not saved');
+    return false;
+  }
 
   const { playerName, gameId, level, elapsedMs } = completion;
 
@@ -46,14 +52,15 @@ export async function submitScore(completion: LevelCompletion): Promise<void> {
   }
 
   await pipeline.exec();
+  return true;
 }
 
 /**
  * Get global leaderboard (top N by total points)
  */
-export async function getGlobalLeaderboard(): Promise<LeaderboardEntry[]> {
+export async function getGlobalLeaderboard(): Promise<LeaderboardEntry[] | null> {
   const redis = getRedis();
-  if (!redis) return [];
+  if (!redis) return null;
 
   const results = await redis.zrange(KV_KEYS.globalLb(), 0, TOP_N - 1, {
     rev: true,
@@ -66,9 +73,9 @@ export async function getGlobalLeaderboard(): Promise<LeaderboardEntry[]> {
 /**
  * Get per-game leaderboard
  */
-export async function getGameLeaderboard(gameId: GameId): Promise<LeaderboardEntry[]> {
+export async function getGameLeaderboard(gameId: GameId): Promise<LeaderboardEntry[] | null> {
   const redis = getRedis();
-  if (!redis) return [];
+  if (!redis) return null;
 
   const results = await redis.zrange(KV_KEYS.gameLb(gameId), 0, TOP_N - 1, {
     rev: true,
@@ -84,9 +91,9 @@ export async function getGameLeaderboard(gameId: GameId): Promise<LeaderboardEnt
 export async function getSpeedLeaderboard(
   gameId: GameId,
   level: DifficultyLevel
-): Promise<LeaderboardEntry[]> {
+): Promise<LeaderboardEntry[] | null> {
   const redis = getRedis();
-  if (!redis) return [];
+  if (!redis) return null;
 
   const results = await redis.zrange(KV_KEYS.speedLb(gameId, level), 0, TOP_N - 1, {
     rev: true,
