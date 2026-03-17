@@ -28,7 +28,7 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
   currentRef.current = current;
   scoreRef.current = score;
 
-  // ResizeObserver: compute cell size from the actual available container
+  // ResizeObserver: compute cell size from actual available container
   useEffect(() => {
     const el = boardContainerRef.current;
     if (!el) return;
@@ -150,7 +150,7 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
     return r;
   })();
 
-  // Build display board: stored type | 'ghost:{type}' | null
+  // Build display board
   type DisplayCell = { type: TetrominoType; ghost: boolean } | null;
   const displayBoard: DisplayCell[][] = board.map((row) =>
     row.map((c) => (c ? { type: c, ghost: false } : null))
@@ -180,14 +180,13 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
 
   const winScore = WIN_SCORE[level];
   const progress = Math.min((score / winScore) * 100, 100);
-  const emojiSize = Math.max(Math.round(cellSize * 0.62), 10);
 
   const btnStyle: React.CSSProperties = {
-    background: 'rgba(255,255,255,0.07)',
-    border: '1px solid rgba(255,255,255,0.15)',
-    borderRadius: '12px',
-    color: 'var(--text-primary)',
-    fontSize: '18px',
+    background: 'rgba(255,255,255,0.06)',
+    border: '1px solid rgba(255,255,255,0.12)',
+    borderRadius: '10px',
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: '20px',
     padding: '12px 8px',
     cursor: 'pointer',
     WebkitTapHighlightColor: 'transparent',
@@ -212,19 +211,19 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
         {/* Score */}
         <div style={{
           flex: 1,
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '14px',
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '12px',
           padding: '6px 12px',
         }}>
-          <div style={{ color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Score</div>
-          <div style={{ color: 'var(--rasta-gold)', fontWeight: 900, fontSize: '20px', lineHeight: 1.1 }}>{score}</div>
-          <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>/ {winScore}</div>
-          <div style={{ marginTop: '5px', height: '4px', background: 'rgba(255,255,255,0.07)', borderRadius: '99px', overflow: 'hidden' }}>
+          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>Score</div>
+          <div style={{ color: '#FFD700', fontWeight: 900, fontSize: '22px', lineHeight: 1.1, fontFamily: 'monospace' }}>{score}</div>
+          <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: '10px' }}>/ {winScore}</div>
+          <div style={{ marginTop: '5px', height: '3px', background: 'rgba(255,255,255,0.07)', borderRadius: '99px', overflow: 'hidden' }}>
             <div style={{
               height: '100%',
               width: `${progress}%`,
-              background: 'linear-gradient(90deg, var(--rasta-green), var(--rasta-gold))',
+              background: 'linear-gradient(90deg, #00C851, #FFD700)',
               borderRadius: '99px',
               transition: 'width 0.3s ease',
             }} />
@@ -233,45 +232,42 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
 
         {/* Next piece */}
         <div style={{
-          background: 'rgba(255,255,255,0.05)',
-          border: '1px solid var(--border-color)',
-          borderRadius: '14px',
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '12px',
           padding: '6px 8px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '3px',
-          minWidth: '68px',
+          gap: '4px',
+          minWidth: '66px',
         }}>
-          <div style={{ color: 'var(--text-muted)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Suivant</div>
+          <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '1px' }}>Next</div>
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(4, 11px)',
             gridTemplateRows: 'repeat(4, 11px)',
             gap: '1px',
           }}>
-            {nextGrid.flat().map((c, i) => (
-              <div key={i} style={{
-                width: 11,
-                height: 11,
-                borderRadius: '2px',
-                background: c ? PIECES[c].color : 'rgba(255,255,255,0.04)',
-                boxShadow: c ? 'inset 1px 1px 0 rgba(255,255,255,0.3), inset -1px -1px 0 rgba(0,0,0,0.25)' : 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-                fontSize: '7px',
-                lineHeight: 1,
-              }}>
-                {c ? PIECES[c].emoji : null}
-              </div>
-            ))}
+            {nextGrid.flat().map((c, i) => {
+              const p = c ? PIECES[c] : null;
+              return (
+                <div key={i} style={{
+                  width: 11,
+                  height: 11,
+                  borderRadius: '2px',
+                  background: p ? p.color : 'rgba(255,255,255,0.03)',
+                  boxShadow: p
+                    ? `inset 1px 1px 0 ${p.highlight}80, inset -1px -1px 0 rgba(0,0,0,0.4)`
+                    : 'none',
+                }} />
+              );
+            })}
           </div>
         </div>
       </div>
 
-      {/* Board container: flex:1 so it takes remaining vertical space */}
+      {/* Board container */}
       <div
         ref={boardContainerRef}
         style={{
@@ -291,9 +287,9 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
             gridTemplateColumns: `repeat(${BOARD_COLS}, ${cellSize}px)`,
             gridTemplateRows: `repeat(${BOARD_ROWS}, ${cellSize}px)`,
             gap: '1px',
-            background: 'rgba(255,255,255,0.04)',
-            border: '2px solid rgba(255,255,255,0.1)',
-            borderRadius: '10px',
+            background: 'rgba(255,255,255,0.05)',
+            border: '2px solid rgba(255,255,255,0.08)',
+            borderRadius: '8px',
             overflow: 'hidden',
             touchAction: 'none',
             userSelect: 'none',
@@ -305,30 +301,31 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
                 <div key={i} style={{
                   width: cellSize,
                   height: cellSize,
-                  background: 'rgba(8,16,8,0.97)',
+                  background: '#050e05',
                 }} />
               );
             }
-            const piece = PIECES[cell.type];
+            const p = PIECES[cell.type];
+            if (cell.ghost) {
+              return (
+                <div key={i} style={{
+                  width: cellSize,
+                  height: cellSize,
+                  background: 'transparent',
+                  border: `1px solid ${p.color}55`,
+                  borderRadius: '2px',
+                  boxSizing: 'border-box',
+                }} />
+              );
+            }
             return (
               <div key={i} style={{
                 width: cellSize,
                 height: cellSize,
-                background: cell.ghost ? `${piece.color}28` : piece.color,
+                background: `linear-gradient(135deg, ${p.highlight} 0%, ${p.color} 50%, color-mix(in srgb, ${p.color} 70%, black) 100%)`,
                 borderRadius: '2px',
-                boxShadow: cell.ghost
-                  ? `inset 0 0 0 1px ${piece.color}60`
-                  : 'inset 2px 2px 0 rgba(255,255,255,0.3), inset -2px -2px 0 rgba(0,0,0,0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-                fontSize: emojiSize,
-                lineHeight: 1,
-                opacity: cell.ghost ? 0.7 : 1,
-              }}>
-                {cell.ghost ? null : piece.emoji}
-              </div>
+                boxShadow: `inset 2px 2px 0 rgba(255,255,255,0.25), inset -2px -2px 0 rgba(0,0,0,0.35)`,
+              }} />
             );
           })}
         </div>
@@ -336,12 +333,14 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
 
       {/* Controls */}
       <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: '5px' }}>
-        <button style={{ ...btnStyle, flex: 'none', padding: '10px 8px' }}
+        <button
+          style={{ ...btnStyle, flex: 'none', padding: '10px 8px', borderRadius: '10px', fontSize: '16px', letterSpacing: '0.5px' }}
           onClick={() => {
             const rotated = rotate(currentRef.current.cells);
             if (isValid(boardRef.current, rotated, currentRef.current.row, currentRef.current.col))
               setCurrent({ ...currentRef.current, cells: rotated });
-          }}>
+          }}
+        >
           🔄 Tourner
         </button>
         <div style={{ display: 'flex', gap: '5px' }}>

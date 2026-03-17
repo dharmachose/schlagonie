@@ -13,14 +13,15 @@ export const DROP_SPEED: Record<DifficultyLevel, number> = {
 
 export type TetrominoType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'J' | 'L';
 
-export const PIECES: Record<TetrominoType, { cells: [number, number][]; emoji: string; color: string; label: string }> = {
-  I: { cells: [[-1,0],[0,0],[1,0],[2,0]], emoji: '🚬', color: '#7CFC00', label: 'spliff' },
-  O: { cells: [[0,0],[0,1],[1,0],[1,1]],  emoji: '🍺', color: '#FFD700', label: 'bédot' },
-  T: { cells: [[0,-1],[0,0],[0,1],[-1,0]], emoji: '🌲', color: '#228B22', label: 'sapin' },
-  S: { cells: [[0,0],[0,1],[-1,-1],[-1,0]], emoji: '🌿', color: '#32CD32', label: 'herbe' },
-  Z: { cells: [[-1,0],[-1,1],[0,-1],[0,0]], emoji: '🍄', color: '#DC143C', label: 'champi' },
-  J: { cells: [[-1,-1],[0,-1],[0,0],[0,1]], emoji: '❄️', color: '#87CEEB', label: 'neige' },
-  L: { cells: [[-1,1],[0,-1],[0,0],[0,1]],  emoji: '🪵', color: '#FFA500', label: 'bûche' },
+// Rasta color palette: rouge / jaune-or / vert (3 nuances de chaque)
+export const PIECES: Record<TetrominoType, { cells: [number, number][]; color: string; highlight: string }> = {
+  I: { cells: [[-1,0],[0,0],[1,0],[2,0]], color: '#00C851', highlight: '#00FF66' }, // vert vif
+  O: { cells: [[0,0],[0,1],[1,0],[1,1]],  color: '#FFD700', highlight: '#FFF04D' }, // or
+  T: { cells: [[0,-1],[0,0],[0,1],[-1,0]], color: '#E8212E', highlight: '#FF5566' }, // rouge
+  S: { cells: [[0,0],[0,1],[-1,-1],[-1,0]], color: '#22AA44', highlight: '#44DD66' }, // vert forêt
+  Z: { cells: [[-1,0],[-1,1],[0,-1],[0,0]], color: '#CC0022', highlight: '#FF3344' }, // rouge foncé
+  J: { cells: [[-1,-1],[0,-1],[0,0],[0,1]], color: '#FFCC00', highlight: '#FFE84D' }, // jaune
+  L: { cells: [[-1,1],[0,-1],[0,0],[0,1]],  color: '#FF6600', highlight: '#FF9933' }, // orange-rouge
 };
 
 // Board stores TetrominoType so we can retrieve color + emoji on render
