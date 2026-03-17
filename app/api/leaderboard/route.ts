@@ -15,16 +15,19 @@ export async function GET(req: NextRequest) {
   try {
     if (type === 'global') {
       const entries = await getGlobalLeaderboard();
+      if (entries === null) return NextResponse.json({ error: 'no_redis' }, { status: 503 });
       return NextResponse.json(entries);
     }
 
     if (type === 'game' && gameId) {
       const entries = await getGameLeaderboard(gameId);
+      if (entries === null) return NextResponse.json({ error: 'no_redis' }, { status: 503 });
       return NextResponse.json(entries);
     }
 
     if (type === 'speed' && gameId && level) {
       const entries = await getSpeedLeaderboard(gameId, Number(level) as DifficultyLevel);
+      if (entries === null) return NextResponse.json({ error: 'no_redis' }, { status: 503 });
       return NextResponse.json(entries);
     }
 
