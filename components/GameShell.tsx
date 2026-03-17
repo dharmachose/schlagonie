@@ -26,7 +26,6 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
 
   const [state, setState] = useState<GameState>('playing');
   const [elapsedMs, setElapsedMs] = useState(0);
-  const [scoreError, setScoreError] = useState(false);
   const startRef = useRef(Date.now());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -43,6 +42,7 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
     if (timerRef.current) clearInterval(timerRef.current);
     setState('win');
     recordCompletion(gameId, level, ms);
+    // Fire-and-forget sync to Redis — local save already done above
     if (player) {
       fetch('/api/scores', {
         method: 'POST',
@@ -55,9 +55,7 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
           elapsedMs: ms,
           completedAt: Date.now(),
         }),
-      })
-        .then((r) => { if (!r.ok) setScoreError(true); })
-        .catch(() => setScoreError(true));
+      }).catch(() => {/* silent — score already saved locally */});
     }
   }, [gameId, level, player, recordCompletion]);
 
@@ -161,18 +159,17 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
             }}>
               ⏱ {formatTime(elapsedMs)}
             </div>
-            {scoreError && (
-              <div style={{
-                fontSize: '12px',
-                color: 'var(--rasta-red)',
-                textAlign: 'center',
-                background: 'rgba(220,20,60,0.1)',
-                borderRadius: '10px',
-                padding: '8px 14px',
-              }}>
-                ⚠️ Score non sauvegardé — vérifie la connexion ou Vercel KV
-              </div>
-            )}
+            <div style={{
+              fontSize: '12px',
+              color: 'var(--rasta-green-light)',
+              textAlign: 'center',
+              background: 'rgba(50,205,50,0.08)',
+              border: '1px solid rgba(50,205,50,0.2)',
+              borderRadius: '10px',
+              padding: '6px 14px',
+            }}>
+              ✓ Score sauvegardé
+            </div>
             <div style={{ display: 'flex', gap: '12px', flexDirection: 'column', width: '100%' }}>
               {level < 5 && (
                 <button

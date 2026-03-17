@@ -44,10 +44,3 @@ export interface GameProps {
   onGameOver: () => void;
 }
 
-// Vercel KV / Redis key helpers
-export const KV_KEYS = {
-  globalLb: () => 'lb:global',
-  gameLb: (gameId: GameId) => `lb:${gameId}`,
-  speedLb: (gameId: GameId, level: DifficultyLevel) => `lb:${gameId}:lvl:${level}:speed`,
-  player: (playerId: string) => `player:${playerId}`,
-};

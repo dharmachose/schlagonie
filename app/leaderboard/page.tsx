@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { GAMES } from '@/lib/games/config';
+import { useStore } from '@/lib/store';
 import type { LeaderboardEntry, GameId, DifficultyLevel } from '@/lib/types';
 
 type Tab = 'global' | 'game' | 'speed';
@@ -19,6 +20,24 @@ export default function LeaderboardPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [noRedis, setNoRedis] = useState(false);
+  const { player, completedLevels, totalPoints } = useStore();
+
+  // Build local leaderboard from localStorage when Redis is unavailable
+  const localEntries = (): LeaderboardEntry[] => {
+    if (!player) return [];
+    if (tab === 'global') {
+      return [{ rank: 1, playerName: player.name, score: totalPoints }];
+    }
+    if (tab === 'game') {
+      const pts = completedLevels.filter((c) => c.gameId === gameId).length;
+      return pts > 0 ? [{ rank: 1, playerName: player.name, score: pts }] : [];
+    }
+    if (tab === 'speed') {
+      const best = completedLevels.find((c) => c.gameId === gameId && c.level === level);
+      return best ? [{ rank: 1, playerName: player.name, score: 0, fastestMs: best.bestMs }] : [];
+    }
+    return [];
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -144,15 +163,59 @@ export default function LeaderboardPage() {
           <div style={{ fontSize: '15px' }}>Chargement...</div>
         </div>
       ) : noRedis ? (
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '60px 0' }}>
-          <div style={{ fontSize: '48px', marginBottom: '12px' }}>🔌</div>
-          <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--rasta-red)' }}>
-            Base de données non connectée
-          </div>
-          <div style={{ fontSize: '13px', marginTop: '6px' }}>
-            Configure Vercel KV (Upstash Redis) dans le dashboard Vercel
-          </div>
-        </div>
+        (() => {
+          const local = localEntries();
+          return (
+            <div>
+              <div style={{
+                fontSize: '12px',
+                color: 'var(--text-muted)',
+                textAlign: 'center',
+                marginBottom: '16px',
+                background: 'rgba(255,255,255,0.04)',
+                borderRadius: '10px',
+                padding: '8px 12px',
+              }}>
+                📱 Classement local — tes scores sur cet appareil
+              </div>
+              {local.length === 0 ? (
+                <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '40px 0' }}>
+                  <div style={{ fontSize: '48px', marginBottom: '12px' }}>🌫️</div>
+                  <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                    Aucun score encore
+                  </div>
+                  <div style={{ fontSize: '13px', marginTop: '6px' }}>
+                    Joue pour apparaître ici !
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {local.map((e) => (
+                    <div key={`${e.rank}-${e.playerName}`} className={`lb-entry ${rankStyle(e.rank)}`}>
+                      <div style={{ fontSize: '22px', minWidth: '36px', textAlign: 'center', fontWeight: 900 }}>
+                        {rankEmoji(e.rank)}
+                      </div>
+                      <div style={{ flex: 1, fontWeight: 700, fontSize: '15px', color: 'var(--text-primary)' }}>
+                        {e.playerName}
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        {tab === 'speed' && e.fastestMs != null ? (
+                          <div style={{ color: 'var(--rasta-gold)', fontWeight: 700, fontFamily: 'monospace', fontSize: '15px' }}>
+                            ⏱ {formatMs(e.fastestMs)}
+                          </div>
+                        ) : (
+                          <div style={{ color: 'var(--rasta-gold)', fontWeight: 900, fontSize: '18px' }}>
+                            {e.score} <span style={{ fontSize: '12px', fontWeight: 400, color: 'var(--text-muted)' }}>pts</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()
       ) : entries.length === 0 ? (
         <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '60px 0' }}>
           <div style={{ fontSize: '48px', marginBottom: '12px' }}>🌫️</div>
