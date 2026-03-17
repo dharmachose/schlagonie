@@ -1,127 +1,119 @@
-import { Redis } from '@upstash/redis';
+import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
 import type { GameId, DifficultyLevel, LeaderboardEntry, LevelCompletion } from './types';
-import { KV_KEYS } from './types';
 
-// Redis client — env vars set in Vercel dashboard or .env.local
-// Supports Vercel Redis naming variants (db name: redis-schlagonie → STORAGE_REDIS_SCHLAGONIE_*)
-// and standard Upstash vars
-function getRedis(): Redis | null {
-  const url =
-    process.env.STORAGE_REDIS_SCHLAGONIE_REDIS_REST_URL ||
-    process.env.STORAGE_SCHLAGONIE_REDIS_REST_URL ||
-    process.env.UPSTASH_REDIS_REST_URL;
-  const token =
-    process.env.STORAGE_REDIS_SCHLAGONIE_REDIS_REST_TOKEN ||
-    process.env.STORAGE_SCHLAGONIE_REDIS_REST_TOKEN ||
-    process.env.UPSTASH_REDIS_REST_TOKEN;
+function getSql() {
+  const url = process.env.DATABASE_URL;
+  if (!url) return null;
+  return neon(url);
+}
 
-  if (!url || !token) return null;
-
-  return new Redis({ url, token });
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function ensureTable(sql: NeonQueryFunction<any, any>) {
+  await sql`
+    CREATE TABLE IF NOT EXISTS scores (
+      id           SERIAL  PRIMARY KEY,
+      player_name  TEXT    NOT NULL,
+      game_id      TEXT    NOT NULL,
+      level        INTEGER NOT NULL,
+      elapsed_ms   INTEGER NOT NULL,
+      completed_at BIGINT  NOT NULL
+    )
+  `;
 }
 
 const TOP_N = 20;
 
-/**
- * Submit a level completion. Updates:
- * - global leaderboard (total points per player)
- * - per-game leaderboard
- * - speed leaderboard for that level
- */
 export async function submitScore(completion: LevelCompletion): Promise<boolean> {
-  const redis = getRedis();
-  if (!redis) {
-    console.error('[leaderboard] Redis not configured — score not saved');
+  const sql = getSql();
+  if (!sql) {
+    console.error('[leaderboard] DATABASE_URL not configured — score not saved');
     return false;
   }
-
-  const { playerName, gameId, level, elapsedMs } = completion;
-
-  const pipeline = redis.pipeline();
-
-  // Increment global + per-game scores by 1 (only when first completion registered via API)
-  pipeline.zincrby(KV_KEYS.globalLb(), 1, playerName);
-  pipeline.zincrby(KV_KEYS.gameLb(gameId), 1, playerName);
-
-  // For speed: lower is better → store negative ms, so ZREVRANGE gives fastest first
-  // Only update if better (lower) time
-  const speedKey = KV_KEYS.speedLb(gameId, level);
-  const existing = await redis.zscore(speedKey, playerName);
-  if (existing === null || -elapsedMs > existing) {
-    pipeline.zadd(speedKey, { score: -elapsedMs, member: playerName });
+  try {
+    await ensureTable(sql);
+    const { playerName, gameId, level, elapsedMs, completedAt } = completion;
+    await sql`
+      INSERT INTO scores (player_name, game_id, level, elapsed_ms, completed_at)
+      VALUES (${playerName}, ${gameId}, ${level}, ${elapsedMs}, ${completedAt})
+    `;
+    return true;
+  } catch (err) {
+    console.error('[leaderboard] submitScore error', err);
+    return false;
   }
-
-  await pipeline.exec();
-  return true;
 }
 
-/**
- * Get global leaderboard (top N by total points)
- */
 export async function getGlobalLeaderboard(): Promise<LeaderboardEntry[] | null> {
-  const redis = getRedis();
-  if (!redis) return null;
-
-  const results = await redis.zrange(KV_KEYS.globalLb(), 0, TOP_N - 1, {
-    rev: true,
-    withScores: true,
-  });
-
-  return parseLeaderboardResults(results as (string | number)[]);
+  const sql = getSql();
+  if (!sql) return null;
+  try {
+    await ensureTable(sql);
+    const rows = await sql`
+      SELECT player_name, COUNT(*)::int AS score
+      FROM scores
+      GROUP BY player_name
+      ORDER BY score DESC
+      LIMIT ${TOP_N}
+    `;
+    return rows.map((r, i) => ({
+      rank: i + 1,
+      playerName: r.player_name as string,
+      score: r.score as number,
+    }));
+  } catch (err) {
+    console.error('[leaderboard] getGlobalLeaderboard error', err);
+    return null;
+  }
 }
 
-/**
- * Get per-game leaderboard
- */
 export async function getGameLeaderboard(gameId: GameId): Promise<LeaderboardEntry[] | null> {
-  const redis = getRedis();
-  if (!redis) return null;
-
-  const results = await redis.zrange(KV_KEYS.gameLb(gameId), 0, TOP_N - 1, {
-    rev: true,
-    withScores: true,
-  });
-
-  return parseLeaderboardResults(results as (string | number)[]);
+  const sql = getSql();
+  if (!sql) return null;
+  try {
+    await ensureTable(sql);
+    const rows = await sql`
+      SELECT player_name, COUNT(*)::int AS score
+      FROM scores
+      WHERE game_id = ${gameId}
+      GROUP BY player_name
+      ORDER BY score DESC
+      LIMIT ${TOP_N}
+    `;
+    return rows.map((r, i) => ({
+      rank: i + 1,
+      playerName: r.player_name as string,
+      score: r.score as number,
+    }));
+  } catch (err) {
+    console.error('[leaderboard] getGameLeaderboard error', err);
+    return null;
+  }
 }
 
-/**
- * Get speed leaderboard for a specific game level
- */
 export async function getSpeedLeaderboard(
   gameId: GameId,
   level: DifficultyLevel
 ): Promise<LeaderboardEntry[] | null> {
-  const redis = getRedis();
-  if (!redis) return null;
-
-  const results = await redis.zrange(KV_KEYS.speedLb(gameId, level), 0, TOP_N - 1, {
-    rev: true,
-    withScores: true,
-  }) as (string | number)[];
-
-  return results
-    .reduce<LeaderboardEntry[]>((acc, item, i) => {
-      if (i % 2 === 0) {
-        acc.push({
-          rank: acc.length + 1,
-          playerName: item as string,
-          score: 0,
-          fastestMs: Math.abs(Number(results[i + 1])),
-        });
-      }
-      return acc;
-    }, []);
-}
-
-function parseLeaderboardResults(results: (string | number)[]): LeaderboardEntry[] {
-  const entries: LeaderboardEntry[] = [];
-  for (let i = 0; i < results.length; i += 2) {
-    entries.push({
-      rank: entries.length + 1,
-      playerName: results[i] as string,
-      score: Number(results[i + 1]),
-    });
+  const sql = getSql();
+  if (!sql) return null;
+  try {
+    await ensureTable(sql);
+    const rows = await sql`
+      SELECT player_name, MIN(elapsed_ms)::int AS fastest_ms
+      FROM scores
+      WHERE game_id = ${gameId} AND level = ${level}
+      GROUP BY player_name
+      ORDER BY fastest_ms ASC
+      LIMIT ${TOP_N}
+    `;
+    return rows.map((r, i) => ({
+      rank: i + 1,
+      playerName: r.player_name as string,
+      score: 0,
+      fastestMs: r.fastest_ms as number,
+    }));
+  } catch (err) {
+    console.error('[leaderboard] getSpeedLeaderboard error', err);
+    return null;
   }
-  return entries;
 }
