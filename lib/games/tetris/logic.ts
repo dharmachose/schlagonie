@@ -3,7 +3,6 @@ import type { DifficultyLevel } from '@/lib/types';
 export const BOARD_COLS = 10;
 export const BOARD_ROWS = 20;
 
-// Drop speed in ms per row, per level
 export const DROP_SPEED: Record<DifficultyLevel, number> = {
   1: 800,
   2: 500,
@@ -12,21 +11,20 @@ export const DROP_SPEED: Record<DifficultyLevel, number> = {
   5: 100,
 };
 
-// Shlagonie-themed pieces: still standard Tetrominos but named after Vosges things
-// Shapes encoded as [row][col] offsets from pivot
 export type TetrominoType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'J' | 'L';
 
-export const PIECES: Record<TetrominoType, { cells: [number, number][]; emoji: string; color: string }> = {
-  I: { cells: [[-1,0],[0,0],[1,0],[2,0]], emoji: '🪵', color: '#32CD32' }, // bûche
-  O: { cells: [[0,0],[0,1],[1,0],[1,1]], emoji: '🍺', color: '#FFD700' }, // bédot
-  T: { cells: [[0,-1],[0,0],[0,1],[-1,0]], emoji: '🌲', color: '#228B22' }, // sapin
-  S: { cells: [[0,0],[0,1],[-1,-1],[-1,0]], emoji: '🌿', color: '#32CD32' }, // feuilles
-  Z: { cells: [[-1,0],[-1,1],[0,-1],[0,0]], emoji: '🍄', color: '#DC143C' }, // champignon
-  J: { cells: [[-1,-1],[0,-1],[0,0],[0,1]], emoji: '❄️', color: '#87CEEB' }, // neige
-  L: { cells: [[-1,1],[0,-1],[0,0],[0,1]], emoji: '⛰️', color: '#FFA500' }, // montagne
+export const PIECES: Record<TetrominoType, { cells: [number, number][]; emoji: string; color: string; label: string }> = {
+  I: { cells: [[-1,0],[0,0],[1,0],[2,0]], emoji: '🚬', color: '#7CFC00', label: 'spliff' },
+  O: { cells: [[0,0],[0,1],[1,0],[1,1]],  emoji: '🍺', color: '#FFD700', label: 'bédot' },
+  T: { cells: [[0,-1],[0,0],[0,1],[-1,0]], emoji: '🌲', color: '#228B22', label: 'sapin' },
+  S: { cells: [[0,0],[0,1],[-1,-1],[-1,0]], emoji: '🌿', color: '#32CD32', label: 'herbe' },
+  Z: { cells: [[-1,0],[-1,1],[0,-1],[0,0]], emoji: '🍄', color: '#DC143C', label: 'champi' },
+  J: { cells: [[-1,-1],[0,-1],[0,0],[0,1]], emoji: '❄️', color: '#87CEEB', label: 'neige' },
+  L: { cells: [[-1,1],[0,-1],[0,0],[0,1]],  emoji: '🪵', color: '#FFA500', label: 'bûche' },
 };
 
-export type Board = (string | null)[][];
+// Board stores TetrominoType so we can retrieve color + emoji on render
+export type Board = (TetrominoType | null)[][];
 
 export function emptyBoard(): Board {
   return Array.from({ length: BOARD_ROWS }, () => Array(BOARD_COLS).fill(null));
@@ -58,7 +56,9 @@ export function isValid(board: Board, cells: [number, number][], row: number, co
   return cells.every(([dr, dc]) => {
     const nr = row + dr;
     const nc = col + dc;
-    return nr >= 0 && nr < BOARD_ROWS && nc >= 0 && nc < BOARD_COLS && board[nr][nc] === null;
+    // Cells above the board are allowed (piece entering from top)
+    if (nr < 0) return true;
+    return nr < BOARD_ROWS && nc >= 0 && nc < BOARD_COLS && board[nr][nc] === null;
   });
 }
 
@@ -67,8 +67,8 @@ export function placePiece(board: Board, piece: Tetromino): Board {
   piece.cells.forEach(([dr, dc]) => {
     const nr = piece.row + dr;
     const nc = piece.col + dc;
-    if (nr >= 0 && nr < BOARD_ROWS) {
-      newBoard[nr][nc] = PIECES[piece.type].color;
+    if (nr >= 0 && nr < BOARD_ROWS && nc >= 0 && nc < BOARD_COLS) {
+      newBoard[nr][nc] = piece.type;
     }
   });
   return newBoard;
@@ -81,7 +81,7 @@ export function clearLines(board: Board): { board: Board; linesCleared: number }
     ...Array.from({ length: linesCleared }, () => Array(BOARD_COLS).fill(null)),
     ...remaining,
   ];
-  return { board: newBoard, linesCleared };
+  return { board: newBoard as Board, linesCleared };
 }
 
 export function scoreLines(lines: number): number {
