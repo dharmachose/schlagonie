@@ -49,6 +49,14 @@ export const GAMES: GameMeta[] = [
     color: '#8B6914',
     available: true,
   },
+  {
+    id: 'allo',
+    title: 'Allo ?!',
+    emoji: '📞',
+    description: "Réponds aux clients sans faire de faute ! Orthographe, grammaire, chiffres plausibles... Décrochez !",
+    color: '#4A90D9',
+    available: true,
+  },
 ];
 
 export const LEVEL_LABELS: Record<number, string> = {
