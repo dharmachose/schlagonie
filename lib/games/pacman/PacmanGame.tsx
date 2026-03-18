@@ -14,6 +14,10 @@ interface HudState {
   scaredTimer: number;
 }
 
+const DPAD_BTN = 68;
+const DPAD_GAP = 6;
+const DPAD_HEIGHT = DPAD_BTN * 3 + DPAD_GAP * 2;
+
 export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -21,6 +25,7 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
   const tileSizeRef = useRef(20);
   const callbacksFired = useRef({ complete: false, over: false });
   const startTimeRef = useRef(Date.now());
+  const holdIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [hud, setHud] = useState<HudState>({ score: 0, lives: 3, dotsLeft: 0, scared: false, scaredTimer: 0 });
   const [pressedDir, setPressedDir] = useState<Direction | null>(null);
@@ -49,8 +54,9 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
       if (!state) return;
       const { cols, rows } = state.mazeDef;
       const rect = container.getBoundingClientRect();
-      // Reserve: HUD ~36px + D-pad ~56px + gaps ~16px = ~108px
-      const availH = rect.height - 108;
+      // Reserve: HUD ~36px + cross D-pad + gaps
+      const reserved = 36 + DPAD_HEIGHT + 24;
+      const availH = rect.height - reserved;
       const availW = rect.width - 12;
       const byW = Math.floor(availW / cols);
       const byH = Math.floor(availH / rows);
@@ -65,7 +71,6 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
 
     const ro = new ResizeObserver(updateSize);
     ro.observe(container);
-    // Initial
     setTimeout(updateSize, 50);
     return () => ro.disconnect();
   }, []);
@@ -86,7 +91,6 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
 
       tickGame(state, dt);
 
-      // Check win/lose
       if (isGameWon(state) && !callbacksFired.current.complete) {
         callbacksFired.current.complete = true;
         state.phase = 'levelComplete';
@@ -97,10 +101,8 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
         onGameOver();
       }
 
-      // Render
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // Ensure canvas dimensions match
         const expectedW = state.mazeDef.cols * tileSizeRef.current;
         const expectedH = state.mazeDef.rows * tileSizeRef.current;
         if (canvas.width !== expectedW || canvas.height !== expectedH) {
@@ -110,7 +112,6 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
         renderFrame(ctx, state, tileSizeRef.current);
       }
 
-      // Update HUD ~4x/s to avoid excessive re-renders
       hudCounter++;
       if (hudCounter % 15 === 0) {
         setHud({
@@ -146,7 +147,7 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
-  // Touch swipe
+  // Touch swipe on canvas
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -163,15 +164,73 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
     }
   }, []);
 
-  // D-pad handler
-  const handleDpad = useCallback((dir: Direction) => {
+  // D-pad: press and hold support
+  const handleDpadStart = useCallback((dir: Direction) => {
     if (stateRef.current) stateRef.current.pacman.nextDir = dir;
     setPressedDir(dir);
-    setTimeout(() => setPressedDir(null), 120);
+    if (navigator.vibrate) navigator.vibrate(18);
+    holdIntervalRef.current = setInterval(() => {
+      if (stateRef.current) stateRef.current.pacman.nextDir = dir;
+    }, 80);
+  }, []);
+
+  const handleDpadEnd = useCallback(() => {
+    if (holdIntervalRef.current) {
+      clearInterval(holdIntervalRef.current);
+      holdIntervalRef.current = null;
+    }
+    setPressedDir(null);
+  }, []);
+
+  // Cleanup hold interval on unmount
+  useEffect(() => () => {
+    if (holdIntervalRef.current) clearInterval(holdIntervalRef.current);
   }, []);
 
   const livesDisplay = [];
   for (let i = 0; i < hud.lives; i++) livesDisplay.push('👑');
+
+  const dpadBtn = (dir: Direction, label: string) => {
+    const pressed = pressedDir === dir;
+    return (
+      <button
+        key={dir}
+        onPointerDown={(e) => { e.preventDefault(); handleDpadStart(dir); }}
+        onPointerUp={handleDpadEnd}
+        onPointerLeave={handleDpadEnd}
+        onPointerCancel={handleDpadEnd}
+        style={{
+          width: DPAD_BTN,
+          height: DPAD_BTN,
+          borderRadius: dir === 'up' ? '14px 14px 6px 6px'
+            : dir === 'down' ? '6px 6px 14px 14px'
+            : dir === 'left' ? '14px 6px 6px 14px'
+            : '6px 14px 14px 6px',
+          background: pressed
+            ? 'linear-gradient(160deg, #2e7d32, #1b5e20)'
+            : 'linear-gradient(160deg, #222, #141414)',
+          border: `2px solid ${pressed ? '#4caf50' : '#333'}`,
+          color: pressed ? '#fff' : '#FFD700',
+          fontSize: 26,
+          fontWeight: 700,
+          cursor: 'pointer',
+          WebkitTapHighlightColor: 'transparent',
+          touchAction: 'none',
+          userSelect: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          transform: pressed ? 'scale(0.88)' : 'scale(1)',
+          transition: 'transform 0.08s, background 0.08s, border-color 0.08s, color 0.08s',
+          boxShadow: pressed
+            ? 'inset 0 2px 6px rgba(0,0,0,0.6)'
+            : '0 4px 8px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.07)',
+        }}
+      >
+        {label}
+      </button>
+    );
+  };
 
   return (
     <div
@@ -200,17 +259,13 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
           {hud.dotsLeft > 0 ? `${hud.dotsLeft} 🍫` : 'Bravo !'}
         </span>
         {hud.scared && (
-          <span style={{
-            color: '#FF8C00',
-            fontWeight: 700,
-            fontSize: 12,
-          }}>
+          <span style={{ color: '#FF8C00', fontWeight: 700, fontSize: 12 }}>
             🧀 MUNSTER !
           </span>
         )}
       </div>
 
-      {/* Canvas — flex:1 to fill available space */}
+      {/* Canvas */}
       <div style={{
         flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
         width: '100%', minHeight: 0,
@@ -230,35 +285,31 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
         />
       </div>
 
-      {/* D-pad — compact row layout */}
+      {/* Cross D-pad */}
       <div style={{
-        display: 'flex',
-        gap: 6,
-        alignItems: 'center',
+        display: 'grid',
+        gridTemplateColumns: `repeat(3, ${DPAD_BTN}px)`,
+        gridTemplateRows: `repeat(3, ${DPAD_BTN}px)`,
+        gap: DPAD_GAP,
         flexShrink: 0,
       }}>
-        {(['left', 'up', 'down', 'right'] as Direction[]).map((dir) => (
-          <button
-            key={dir}
-            onPointerDown={() => handleDpad(dir)}
-            style={{
-              width: 56, height: 48, borderRadius: 14,
-              background: pressedDir === dir
-                ? 'linear-gradient(180deg, #2e7d32, #1b5e20)'
-                : 'linear-gradient(180deg, #1a1a1a, #111)',
-              border: '2px solid #333',
-              color: '#FFD700',
-              fontSize: 22,
-              cursor: 'pointer',
-              WebkitTapHighlightColor: 'transparent',
-              transition: 'transform 0.1s, background 0.1s',
-              transform: pressedDir === dir ? 'scale(0.9)' : 'scale(1)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
-            {dir === 'up' ? '▲' : dir === 'down' ? '▼' : dir === 'left' ? '◀' : '▶'}
-          </button>
-        ))}
+        {/* Row 1 */}
+        <div />
+        {dpadBtn('up', '▲')}
+        <div />
+        {/* Row 2 */}
+        {dpadBtn('left', '◀')}
+        <div style={{
+          borderRadius: 8,
+          background: 'radial-gradient(circle, #1a1a1a, #0d0d0d)',
+          border: '2px solid #222',
+          boxShadow: 'inset 0 2px 6px rgba(0,0,0,0.8)',
+        }} />
+        {dpadBtn('right', '▶')}
+        {/* Row 3 */}
+        <div />
+        {dpadBtn('down', '▼')}
+        <div />
       </div>
     </div>
   );
