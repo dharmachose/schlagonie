@@ -5,7 +5,7 @@ export default function Match3Page() {
     <LevelSelectPage
       gameId="match3"
       title="👋 Crush des Vosges"
-      description="Aligne baffes, sapins et bédots pour scorer ! Atteins l'objectif avant que Shlagonie ne s'énerve 😤"
+      description="Aligne baffes, sapins et cocas pour scorer ! Atteins l'objectif avant que Shlagonie ne s'énerve 😤"
       color="#FFD700"
       levelEmojis={{ 1: '🌱', 2: '👋', 3: '🌲', 4: '⚡', 5: '🔥' }}
       levelDetails={{

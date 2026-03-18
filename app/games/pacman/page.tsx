@@ -4,16 +4,16 @@ export default function PacmanPage() {
   return (
     <LevelSelectPage
       gameId="pacman"
-      title="🏃 Shlagonie Fuit !"
-      description="Shlagonie dévale les ruelles d'Aydoilles, fuyant les fantômes vosgiens. Mange tous les points pour gagner !"
+      title="👑 Shlagonie Fuit !"
+      description="La reine Shlagonie fuit les fruits et légumes qui veulent la forcer à manger sainement. Mange tout le Nutella pour leur échapper !"
       color="#DC143C"
-      levelEmojis={{ 1: '🌫️', 2: '👻', 3: '💨', 4: '😱', 5: '💀' }}
+      levelEmojis={{ 1: '🥬', 2: '🥕', 3: '🍆', 4: '🥦', 5: '🌶️' }}
       levelDetails={{
-        1: '1 fantôme lent — labyrinthe simple',
-        2: '2 fantômes — labyrinthe moyen',
-        3: '2 fantômes rapides — labyrinthe étendu',
-        4: '3 fantômes — labyrinthe complexe',
-        5: '4 fantômes déchaînés — labyrinthe max',
+        1: '2 légumes lents — ruelles simples',
+        2: '3 légumes — ruelles moyennes',
+        3: '4 légumes — ruelles étendues',
+        4: '4 légumes rapides — ruelles complexes',
+        5: '4 légumes déchaînés — ruelles infernales',
       }}
     />
   );

@@ -5,7 +5,7 @@ export default function TetrisPage() {
     <LevelSelectPage
       gameId="tetris"
       title="🪵 Tetris Shlagonie"
-      description="Empile bûches, sapins et bédots pour atteindre le score cible avant que la forêt déborde !"
+      description="Empile bûches, sapins et cocas pour atteindre le score cible avant que la forêt déborde !"
       color="#32CD32"
       levelEmojis={{ 1: '🌱', 2: '🌿', 3: '🪵', 4: '🌲', 5: '🏔️' }}
       levelDetails={{

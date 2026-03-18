@@ -1,270 +1,259 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  buildMaze, countDots, moveGhost, getNeighbors,
-  ROWS, COLS, GHOST_SPEED, PACMAN_SPEED, GHOST_COUNT, GHOST_EMOJIS,
-  type Cell, type Direction, type GhostState, type Pos,
-} from './logic';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { GameProps } from '@/lib/types';
+import type { Direction, GameState } from './types';
+import { createGameState, tickGame, isGameWon, isGameOver } from './engine';
+import { renderFrame } from './renderer';
 
-const SCARED_DURATION = 8000;
+interface HudState {
+  score: number;
+  lives: number;
+  dotsLeft: number;
+  scared: boolean;
+  scaredTimer: number;
+}
 
 export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameProps) {
-  const [maze, setMaze] = useState<Cell[][]>(() => buildMaze());
-  const [pacPos, setPacPos] = useState<Pos>({ row: 14, col: 9 });
-  const [pacDir, setPacDir] = useState<Direction>('right');
-  const [nextDir, setNextDir] = useState<Direction>('right');
-  const [ghosts, setGhosts] = useState<GhostState[]>(() =>
-    GHOST_EMOJIS.slice(0, GHOST_COUNT[level]).map((emoji, i) => ({
-      pos: { row: 8 + (i % 2), col: 8 + i },
-      dir: 'left' as Direction,
-      scared: false,
-      emoji,
-    }))
-  );
-  const [score, setScore] = useState(0);
-  const [dotsLeft, setDotsLeft] = useState(() => countDots(buildMaze()));
-  const [lives, setLives] = useState(3);
-  const [scaredTimer, setScaredTimer] = useState(0);
-  const [dead, setDead] = useState(false);
-  const startRef = useRef(Date.now());
-  const mazeRef = useRef(maze);
-  const pacRef = useRef(pacPos);
-  const nextDirRef = useRef(nextDir);
-  const ghostsRef = useRef(ghosts);
-  mazeRef.current = maze;
-  pacRef.current = pacPos;
-  nextDirRef.current = nextDir;
-  ghostsRef.current = ghosts;
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const stateRef = useRef<GameState | null>(null);
+  const tileSizeRef = useRef(20);
+  const callbacksFired = useRef({ complete: false, over: false });
+  const startTimeRef = useRef(Date.now());
 
-  // Viewport size
-  const [cellSize, setCellSize] = useState(18);
+  const [hud, setHud] = useState<HudState>({ score: 0, lives: 3, dotsLeft: 0, scared: false, scaredTimer: 0 });
+  const [pressedDir, setPressedDir] = useState<Direction | null>(null);
+
+  // Initialize game state
   useEffect(() => {
-    const update = () => setCellSize(Math.floor(Math.min(window.innerWidth - 8, window.innerHeight - 160) / Math.max(ROWS, COLS)));
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
+    const state = createGameState(level);
+    stateRef.current = state;
+    startTimeRef.current = Date.now();
+    setHud({
+      score: state.score,
+      lives: state.lives,
+      dotsLeft: state.dotsTotal - state.dotsEaten,
+      scared: false,
+      scaredTimer: 0,
+    });
+  }, [level]);
+
+  // ResizeObserver for responsive canvas
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const updateSize = () => {
+      const state = stateRef.current;
+      if (!state) return;
+      const { cols, rows } = state.mazeDef;
+      const rect = container.getBoundingClientRect();
+      // Leave space for HUD (40px) and D-pad (160px)
+      const availH = rect.height - 200;
+      const availW = rect.width - 8;
+      const byW = Math.floor(availW / cols);
+      const byH = Math.floor(availH / rows);
+      tileSizeRef.current = Math.max(Math.min(byW, byH, 28), 10);
+
+      const canvas = canvasRef.current;
+      if (canvas) {
+        canvas.width = cols * tileSizeRef.current;
+        canvas.height = rows * tileSizeRef.current;
+      }
+    };
+
+    const ro = new ResizeObserver(updateSize);
+    ro.observe(container);
+    // Initial
+    setTimeout(updateSize, 50);
+    return () => ro.disconnect();
   }, []);
 
-  const dirOffsets: Record<Direction, Pos> = {
-    up: { row: -1, col: 0 }, down: { row: 1, col: 0 },
-    left: { row: 0, col: -1 }, right: { row: 0, col: 1 },
-  };
-
-  // Pacman movement
+  // Game loop
   useEffect(() => {
-    if (dead) return;
-    const interval = setInterval(() => {
-      const m = mazeRef.current;
-      const pos = pacRef.current;
-      const wantedDir = nextDirRef.current;
-      const wantedOffset = dirOffsets[wantedDir];
-      const wantedPos = { row: pos.row + wantedOffset.row, col: pos.col + wantedOffset.col };
+    let lastTime = performance.now();
+    let animId = 0;
+    let hudCounter = 0;
 
-      let newPos = pos;
-      let newDir = pacDir;
+    const loop = (now: number) => {
+      const state = stateRef.current;
+      const canvas = canvasRef.current;
+      if (!state || !canvas) { animId = requestAnimationFrame(loop); return; }
 
-      if (wantedPos.row >= 0 && wantedPos.row < ROWS && wantedPos.col >= 0 && wantedPos.col < COLS
-        && m[wantedPos.row][wantedPos.col] !== 'wall') {
-        newPos = wantedPos;
-        newDir = wantedDir;
-      } else {
-        const curOffset = dirOffsets[pacDir];
-        const straight = { row: pos.row + curOffset.row, col: pos.col + curOffset.col };
-        if (straight.row >= 0 && straight.row < ROWS && straight.col >= 0 && straight.col < COLS
-          && m[straight.row][straight.col] !== 'wall') {
-          newPos = straight;
-        }
+      const dt = (now - lastTime) / 1000;
+      lastTime = now;
+
+      tickGame(state, dt);
+
+      // Check win/lose
+      if (isGameWon(state) && !callbacksFired.current.complete) {
+        callbacksFired.current.complete = true;
+        state.phase = 'levelComplete';
+        onLevelComplete(Date.now() - startTimeRef.current);
+      }
+      if (isGameOver(state) && !callbacksFired.current.over) {
+        callbacksFired.current.over = true;
+        onGameOver();
       }
 
-      if (newPos !== pos) {
-        setPacDir(newDir);
-        setPacPos(newPos);
-
-        // Eat dot/power
-        const cell = m[newPos.row][newPos.col];
-        if (cell === 'dot' || cell === 'power') {
-          const newMaze = m.map((r) => [...r]);
-          newMaze[newPos.row][newPos.col] = 'empty';
-          setMaze(newMaze);
-          mazeRef.current = newMaze;
-
-          const pts = cell === 'power' ? 50 : 10;
-          setScore((s) => s + pts);
-          setDotsLeft((d) => {
-            const left = d - 1;
-            if (left <= 0) onLevelComplete(Date.now() - startRef.current);
-            return left;
-          });
-
-          if (cell === 'power') setScaredTimer(SCARED_DURATION);
+      // Render
+      const ctx = canvas.getContext('2d');
+      if (ctx) {
+        // Ensure canvas dimensions match
+        const expectedW = state.mazeDef.cols * tileSizeRef.current;
+        const expectedH = state.mazeDef.rows * tileSizeRef.current;
+        if (canvas.width !== expectedW || canvas.height !== expectedH) {
+          canvas.width = expectedW;
+          canvas.height = expectedH;
         }
+        renderFrame(ctx, state, tileSizeRef.current);
       }
-    }, PACMAN_SPEED[level]);
-    return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level, dead, pacDir]);
 
-  // Scare timer countdown
-  useEffect(() => {
-    if (scaredTimer <= 0) return;
-    const t = setTimeout(() => setScaredTimer((s) => Math.max(0, s - 100)), 100);
-    return () => clearTimeout(t);
-  }, [scaredTimer]);
-
-  // Ghost movement
-  useEffect(() => {
-    if (dead) return;
-    const interval = setInterval(() => {
-      const scared = scaredTimer > 0;
-      setGhosts((gs) =>
-        gs.map((g) => moveGhost(mazeRef.current, g, pacRef.current, scared))
-      );
-    }, GHOST_SPEED[level]);
-    return () => clearInterval(interval);
-  }, [level, dead, scaredTimer]);
-
-  // Collision detection
-  useEffect(() => {
-    const scared = scaredTimer > 0;
-    ghosts.forEach((g) => {
-      if (g.pos.row === pacPos.row && g.pos.col === pacPos.col) {
-        if (scared) {
-          setScore((s) => s + 200);
-          setGhosts((gs) => gs.map((gh) =>
-            gh.pos.row === g.pos.row && gh.pos.col === g.pos.col
-              ? { ...gh, pos: { row: 8, col: 9 } } : gh
-          ));
-        } else {
-          // Pacman dies
-          if (lives <= 1) {
-            setDead(true);
-            onGameOver();
-          } else {
-            setLives((l) => l - 1);
-            setPacPos({ row: 14, col: 9 });
-          }
-        }
+      // Update HUD ~4x/s to avoid excessive re-renders
+      hudCounter++;
+      if (hudCounter % 15 === 0) {
+        setHud({
+          score: state.score,
+          lives: state.lives,
+          dotsLeft: state.dotsTotal - state.dotsEaten,
+          scared: state.scaredTimer > 0,
+          scaredTimer: state.scaredTimer,
+        });
       }
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pacPos, ghosts]);
 
-  // Keyboard controls
+      animId = requestAnimationFrame(loop);
+    };
+
+    animId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(animId);
+  }, [onLevelComplete, onGameOver]);
+
+  // Keyboard input
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const map: Record<string, Direction> = {
         ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
         w: 'up', s: 'down', a: 'left', d: 'right',
       };
-      if (map[e.key]) { e.preventDefault(); setNextDir(map[e.key]); }
+      const dir = map[e.key];
+      if (dir && stateRef.current) {
+        e.preventDefault();
+        stateRef.current.pacman.nextDir = dir;
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, []);
 
   // Touch swipe
-  const touchStart = useRef<{ x: number; y: number } | null>(null);
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-  };
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    if (!touchStart.current) return;
-    const dx = e.changedTouches[0].clientX - touchStart.current.x;
-    const dy = e.changedTouches[0].clientY - touchStart.current.y;
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, []);
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current || !stateRef.current) return;
+    const dx = e.changedTouches[0].clientX - touchStartRef.current.x;
+    const dy = e.changedTouches[0].clientY - touchStartRef.current.y;
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
     if (Math.abs(dx) > Math.abs(dy)) {
-      setNextDir(dx > 0 ? 'right' : 'left');
+      stateRef.current.pacman.nextDir = dx > 0 ? 'right' : 'left';
     } else {
-      setNextDir(dy > 0 ? 'down' : 'up');
+      stateRef.current.pacman.nextDir = dy > 0 ? 'down' : 'up';
     }
-  };
+  }, []);
 
-  const cellBg = (cell: Cell) => {
-    if (cell === 'wall') return 'var(--rasta-green)';
-    return 'var(--bg-dark)';
-  };
+  // D-pad handler
+  const handleDpad = useCallback((dir: Direction) => {
+    if (stateRef.current) stateRef.current.pacman.nextDir = dir;
+    setPressedDir(dir);
+    setTimeout(() => setPressedDir(null), 120);
+  }, []);
+
+  const livesDisplay = [];
+  for (let i = 0; i < hud.lives; i++) livesDisplay.push('👑');
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', gap: '8px', padding: '8px' }}>
+    <div
+      ref={containerRef}
+      style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        height: '100%', gap: 6, padding: '6px 4px',
+        background: '#0d1a0d',
+      }}
+    >
       {/* HUD */}
-      <div style={{ display: 'flex', gap: '20px', alignItems: 'center', fontSize: '14px' }}>
-        <span style={{ color: 'var(--rasta-gold)', fontWeight: 700 }}>🍒 {score}</span>
-        <span style={{ color: 'var(--text-muted)' }}>{'❤️'.repeat(lives)}</span>
-        <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>🟡 {dotsLeft}</span>
-        {scaredTimer > 0 && <span style={{ color: '#87CEEB', animation: 'pulse-gold 0.5s infinite' }}>⚡ PEUR !</span>}
-      </div>
-
-      {/* Maze */}
-      <div
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${COLS}, ${cellSize}px)`,
-          gridTemplateRows: `repeat(${ROWS}, ${cellSize}px)`,
-          border: '2px solid var(--rasta-green)',
-          borderRadius: '4px',
-          overflow: 'hidden',
-          touchAction: 'none',
-          userSelect: 'none',
-          position: 'relative',
-        }}
-      >
-        {maze.map((row, r) =>
-          row.map((cell, c) => {
-            const isPac = pacPos.row === r && pacPos.col === c;
-            const ghost = ghosts.find((g) => g.pos.row === r && g.pos.col === c);
-            return (
-              <div
-                key={`${r}-${c}`}
-                style={{
-                  width: cellSize,
-                  height: cellSize,
-                  background: cellBg(cell),
-                  borderRadius: cell === 'wall' ? '2px' : 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: cellSize * 0.55,
-                  lineHeight: 1,
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-              >
-                {isPac && <span>🏃</span>}
-                {!isPac && ghost && <span>{scaredTimer > 0 ? '💙' : ghost.emoji}</span>}
-                {!isPac && !ghost && cell === 'dot' && (
-                  <div style={{ width: cellSize * 0.18, height: cellSize * 0.18, borderRadius: '50%', background: 'var(--rasta-gold)' }} />
-                )}
-                {!isPac && !ghost && cell === 'power' && (
-                  <div style={{ width: cellSize * 0.42, height: cellSize * 0.42, borderRadius: '50%', background: 'var(--rasta-gold)', boxShadow: '0 0 4px var(--rasta-gold)' }} />
-                )}
-              </div>
-            );
-          })
+      <div style={{
+        display: 'flex', gap: 16, alignItems: 'center', fontSize: 13,
+        padding: '4px 12px', borderRadius: 8,
+        background: 'rgba(0,0,0,0.4)',
+        minHeight: 32,
+      }}>
+        <span style={{ color: '#FFD700', fontWeight: 700, fontFamily: 'monospace' }}>
+          🍫 {hud.score.toString().padStart(5, '0')}
+        </span>
+        <span style={{ letterSpacing: 2 }}>{livesDisplay.join('')}</span>
+        <span style={{ color: '#666', fontSize: 11 }}>
+          {hud.dotsLeft > 0 ? `${hud.dotsLeft} 🍫` : 'Bravo !'}
+        </span>
+        {hud.scared && (
+          <span style={{
+            color: '#FF8C00',
+            fontWeight: 700,
+            fontSize: 12,
+          }}>
+            🧀 MUNSTER !
+          </span>
         )}
       </div>
 
-      {/* D-pad for mobile */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 44px)', gridTemplateRows: 'repeat(3, 44px)', gap: '4px' }}>
-        {[
+      {/* Canvas */}
+      <canvas
+        ref={canvasRef}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        style={{
+          touchAction: 'none',
+          userSelect: 'none',
+          borderRadius: 6,
+          border: '2px solid #228B22',
+          maxWidth: '100%',
+        }}
+      />
+
+      {/* D-pad */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(3, 56px)',
+        gridTemplateRows: 'repeat(3, 56px)',
+        gap: 4,
+        marginTop: 4,
+      }}>
+        {([
           [null, 'up', null],
           ['left', null, 'right'],
           [null, 'down', null],
-        ].flat().map((dir, i) => (
+        ] as (Direction | null)[][]).flat().map((dir, i) => (
           <button
             key={i}
             disabled={!dir}
-            onClick={() => dir && setNextDir(dir as Direction)}
+            onPointerDown={() => dir && handleDpad(dir)}
             style={{
-              width: 44, height: 44, borderRadius: '10px',
-              background: dir ? 'var(--bg-card)' : 'transparent',
-              border: dir ? '2px solid var(--border-color)' : 'none',
-              color: 'var(--rasta-gold)', fontSize: '20px',
+              width: 56, height: 56, borderRadius: 14,
+              background: dir
+                ? pressedDir === dir
+                  ? 'linear-gradient(180deg, #2e7d32, #1b5e20)'
+                  : 'linear-gradient(180deg, #1a1a1a, #111)'
+                : 'transparent',
+              border: dir ? '2px solid #333' : 'none',
+              color: '#FFD700',
+              fontSize: 22,
               cursor: dir ? 'pointer' : 'default',
               WebkitTapHighlightColor: 'transparent',
               visibility: dir ? 'visible' : 'hidden',
+              transition: 'transform 0.1s, background 0.1s',
+              transform: pressedDir === dir ? 'scale(0.9)' : 'scale(1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
             }}
           >
             {dir === 'up' ? '▲' : dir === 'down' ? '▼' : dir === 'left' ? '◀' : '▶'}

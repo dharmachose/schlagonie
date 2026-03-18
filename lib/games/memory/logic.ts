@@ -5,7 +5,7 @@ export const VOSGES_EMOJIS = [
   '🌲', // sapin
   '👋', // la baffe
   '🌿', // rasta
-  '🍺', // bédot
+  '🥤', // coca
   '⛰️', // montagne vosges
   '❄️', // neige
   '🦌', // cerf des vosges
