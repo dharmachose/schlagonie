@@ -271,9 +271,9 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
                   width: 11,
                   height: 11,
                   borderRadius: '2px',
-                  background: p ? p.color : 'rgba(255,255,255,0.03)',
+                  background: p ? p.wood.bg : 'rgba(255,255,255,0.03)',
                   boxShadow: p
-                    ? `inset 1px 1px 0 ${p.highlight}80, inset -1px -1px 0 rgba(0,0,0,0.4)`
+                    ? `inset 1px 1px 0 rgba(255,255,255,0.3), inset -1px -1px 0 rgba(0,0,0,0.45)`
                     : 'none',
                 }} />
               );
@@ -327,7 +327,7 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
                   width: cellSize,
                   height: cellSize,
                   background: 'transparent',
-                  border: `1px solid ${p.color}55`,
+                  border: `1px dashed ${p.wood.border}70`,
                   borderRadius: '2px',
                   boxSizing: 'border-box',
                 }} />
@@ -337,9 +337,9 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
               <div key={i} style={{
                 width: cellSize,
                 height: cellSize,
-                background: `linear-gradient(135deg, ${p.highlight} 0%, ${p.color} 50%, color-mix(in srgb, ${p.color} 70%, black) 100%)`,
+                background: p.wood.bg,
                 borderRadius: '2px',
-                boxShadow: `inset 2px 2px 0 rgba(255,255,255,0.25), inset -2px -2px 0 rgba(0,0,0,0.35)`,
+                boxShadow: `inset 2px 2px 0 rgba(255,255,255,0.28), inset -2px -2px 0 rgba(0,0,0,0.45), inset 0 0 5px rgba(0,0,0,0.15)`,
               }} />
             );
           })}
