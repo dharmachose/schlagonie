@@ -41,13 +41,17 @@ export default function TowerGame({ level, onLevelComplete, onGameOver }: GamePr
       const containerW = container.clientWidth;
       const containerH = container.clientHeight;
 
-      // Tile size based on width (limiting factor in portrait mode)
-      const tileSize = Math.floor(containerW / 16);
+      // Dynamic grid dimensions from level config
+      const cols = levelConfig.cols;
+      const rows = levelConfig.rows;
+
+      // Tile size: fit grid to container (use the smaller of width/height ratios)
+      const tileSize = Math.floor(Math.min(containerW / cols, containerH / rows));
       // Canvas fills the entire container, grid centered inside
       const gameW = containerW;
       const gameH = containerH;
-      const gridOffsetX = Math.floor((gameW - tileSize * 16) / 2);
-      const gridOffsetY = Math.floor((gameH - tileSize * 11) / 2);
+      const gridOffsetX = Math.floor((gameW - tileSize * cols) / 2);
+      const gridOffsetY = Math.floor((gameH - tileSize * rows) / 2);
 
       const game = new Phaser.Game({
         type: Phaser.AUTO,

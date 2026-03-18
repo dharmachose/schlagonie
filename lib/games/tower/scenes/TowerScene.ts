@@ -9,8 +9,7 @@ import {
 } from '../config';
 import { buildSpawnQueue, updateBattle, dist, findTarget } from '../engine';
 
-const COLS = 16;
-const ROWS = 11;
+// Grid dimensions are read from levelConfig (cols/rows)
 
 const TILE_COLORS: Record<string, number> = {
   BUILD: 0x2d5a1b, PATH: 0x8B6914, BLOCKED: 0x1a3a0a, CORE: 0x8B0000,
@@ -139,8 +138,8 @@ export default class TowerScene extends Phaser.Scene {
     g.clear();
 
     // Decorative border around grid
-    const gridW = T * COLS;
-    const gridH = T * ROWS;
+    const gridW = T * this.levelConfig.cols;
+    const gridH = T * this.levelConfig.rows;
 
     // Subtle vignette / frame around the grid
     g.fillStyle(0x0a150a, 1);
@@ -164,8 +163,8 @@ export default class TowerScene extends Phaser.Scene {
     g.lineStyle(2, 0x3a5a2a, 0.6);
     g.strokeRect(ox - 1, oy - 1, gridW + 2, gridH + 2);
 
-    for (let row = 0; row < ROWS; row++) {
-      for (let col = 0; col < COLS; col++) {
+    for (let row = 0; row < this.levelConfig.rows; row++) {
+      for (let col = 0; col < this.levelConfig.cols; col++) {
         const tt = this.levelConfig.grid[row]?.[col] ?? 'BUILD';
         const x = col * T + ox;
         const y = row * T + oy;
@@ -272,7 +271,7 @@ export default class TowerScene extends Phaser.Scene {
   private handleClick(pointer: Phaser.Input.Pointer) {
     const col = Math.floor((pointer.x - this.ox) / this.T);
     const row = Math.floor((pointer.y - this.oy) / this.T);
-    if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return;
+    if (col < 0 || col >= this.levelConfig.cols || row < 0 || row >= this.levelConfig.rows) return;
 
     const existing = this.state.towers.find(t => t.col === col && t.row === row);
     if (existing) {
@@ -594,7 +593,7 @@ export default class TowerScene extends Phaser.Scene {
       rc.strokeCircle(cx, cy, r * 0.6);
     }
 
-    if (this.hoverCol >= 0 && this.hoverRow >= 0 && this.hoverCol < COLS && this.hoverRow < ROWS) {
+    if (this.hoverCol >= 0 && this.hoverRow >= 0 && this.hoverCol < this.levelConfig.cols && this.hoverRow < this.levelConfig.rows) {
       const ht = this.state.towers.find(t => t.col === this.hoverCol && t.row === this.hoverRow);
       if (ht && ht !== this.selectedTower) {
         const { x: cx, y: cy } = this.tc(ht.col, ht.row);
