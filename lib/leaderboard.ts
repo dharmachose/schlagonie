@@ -87,6 +87,41 @@ export async function submitTribute(tribute: TributeSubmission): Promise<boolean
   }
 }
 
+export interface TributeRow {
+  id: number;
+  playerId: string;
+  playerName: string;
+  questionId: string;
+  question: string;
+  answer: string;
+  answeredAt: number;
+}
+
+export async function getAllTributes(): Promise<TributeRow[] | null> {
+  const sql = getSql();
+  if (!sql) return null;
+  try {
+    await ensureTributesTable(sql);
+    const rows = await sql`
+      SELECT id, player_id, player_name, question_id, question, answer, answered_at
+      FROM tributes
+      ORDER BY answered_at ASC
+    `;
+    return rows.map((r) => ({
+      id: r.id as number,
+      playerId: r.player_id as string,
+      playerName: r.player_name as string,
+      questionId: r.question_id as string,
+      question: r.question as string,
+      answer: r.answer as string,
+      answeredAt: r.answered_at as number,
+    }));
+  } catch (err) {
+    console.error('[leaderboard] getAllTributes error', err);
+    return null;
+  }
+}
+
 export async function getGlobalLeaderboard(): Promise<LeaderboardEntry[] | null> {
   const sql = getSql();
   if (!sql) return null;
