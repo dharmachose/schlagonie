@@ -13,131 +13,179 @@ function parseGrid(lines: string[]): TileType[][] {
   );
 }
 
-// ─── Level 1 — Simple L-path ──────────────────────────────────────────────────
-// Enemies enter left row 2, go right, turn down col 9-10, then right to core
+// ═══════════════════════════════════════════════════════════════════════════════
+// All levels are 9 cols × 16 rows (portrait) for mobile-first layout.
+// Enemies enter from the top, core at the bottom.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── Level 1 — Simple Z-path ────────────────────────────────────────────────
+// Enter top col 4, Z down-left then down-right to core
 const L1_GRID = parseGrid([
-  'BBBBBBBBBBBBBBBB', // row 0
-  'BBBBBBBBBBBBBBBB', // row 1
-  'PPPPPPPPPPPBBBBB', // row 2  path right (cols 0-10)
-  'BBBBBBBBBPPBBBBB', // row 3  vertical (cols 9-10)
-  'BBBBBBBBBPPBBBBB', // row 4
-  'BBBBBBBBBPPBBBBB', // row 5
-  'BBBBBBBBBPPBBBBB', // row 6
-  'BBBBBBBBBPPBBBBB', // row 7
-  'BBBBBBBBBPPBBBBB', // row 8
-  'BBBBBBBBBPPPPPPP', // row 9  path right (cols 9-15)
-  'BBBBBBBBBBBBBBBC', // row 10 core at col 15
+  'BBBBPBBBB', // row 0   enter col 4
+  'BBBBPBBBB', // row 1
+  'BBBBPBBBB', // row 2
+  'BBBBPBBBB', // row 3
+  'BPPPPBBBB', // row 4   left (cols 1-4)
+  'BPBBBBBBB', // row 5   down col 1
+  'BPBBBBBBB', // row 6
+  'BPBBBBBBB', // row 7
+  'BPBBBBBBB', // row 8
+  'BPPPPPPBB', // row 9   right (cols 1-6)
+  'BBBBBBPBB', // row 10  down col 6
+  'BBBBBBPBB', // row 11
+  'BBBBBBPBB', // row 12
+  'BBBBBBPBB', // row 13
+  'BBBBBBPBB', // row 14
+  'BBBBBBCBB', // row 15  core col 6
 ]);
 const L1_PATH = [
-  { col: 0, row: 2 }, { col: 9, row: 2 },
-  { col: 9, row: 9 },
-  { col: 15, row: 9 }, { col: 15, row: 10 },
+  { col: 4, row: 0 }, { col: 4, row: 4 },
+  { col: 1, row: 4 }, { col: 1, row: 9 },
+  { col: 6, row: 9 }, { col: 6, row: 15 },
 ];
 
-// ─── Level 2 — Zigzag ────────────────────────────────────────────────────────
+// ─── Level 2 — Extended zigzag ──────────────────────────────────────────────
+// Enter top col 4, zigzag left-right-left-right down to core
 const L2_GRID = parseGrid([
-  'PPPPPBBBBBBBBBBB', // row 0  enter right (cols 0-4)
-  'BBBBPBBBBBBBBBBB', // row 1  down col 4
-  'BBBBPPPPPPPBBBBB', // row 2  right (cols 4-10)
-  'BBBBBBBBBBPBBBBB', // row 3  down col 10
-  'BBBBBBBBBBPPPPPB', // row 4  right (cols 10-14)
-  'BBBBBBBBBBBBBBPB', // row 5  down col 14
-  'BPPPPPPPPPPPPPPB', // row 6  left (cols 1-14)
-  'BPBBBBBBBBBBBBBB', // row 7  down col 1
-  'BPBBBBBBBBBBBBBB', // row 8  down col 1
-  'BPPPPPPPPPPPPPPP', // row 9  right (cols 1-15)
-  'BBBBBBBBBBBBBBBC', // row 10 core at col 15
+  'BBBBPBBBB', // row 0   enter col 4
+  'BBBBPBBBB', // row 1
+  'BPPPPBBBB', // row 2   left (cols 1-4)
+  'BPBBBBBBB', // row 3   down col 1
+  'BPBBBBBBB', // row 4
+  'BPPPPPPPB', // row 5   right (cols 1-7)
+  'BBBBBBBPB', // row 6   down col 7
+  'BBBBBBBPB', // row 7
+  'BPPPPPPPB', // row 8   left (cols 1-7)
+  'BPBBBBBBB', // row 9   down col 1
+  'BPBBBBBBB', // row 10
+  'BPPPPPPPB', // row 11  right (cols 1-7)
+  'BBBBBBBPB', // row 12  down col 7
+  'BBBBBBBPB', // row 13
+  'BBBBBBBPB', // row 14
+  'BBBBBBBCB', // row 15  core col 7
 ]);
 const L2_PATH = [
-  { col: 0, row: 0 }, { col: 4, row: 0 },
-  { col: 4, row: 2 }, { col: 10, row: 2 },
-  { col: 10, row: 4 }, { col: 14, row: 4 },
-  { col: 14, row: 6 }, { col: 1, row: 6 },
-  { col: 1, row: 9 }, { col: 15, row: 9 },
-  { col: 15, row: 10 },
+  { col: 4, row: 0 }, { col: 4, row: 2 },
+  { col: 1, row: 2 }, { col: 1, row: 5 },
+  { col: 7, row: 5 }, { col: 7, row: 8 },
+  { col: 1, row: 8 }, { col: 1, row: 11 },
+  { col: 7, row: 11 }, { col: 7, row: 15 },
 ];
 
-// ─── Level 3 — Serpentine ────────────────────────────────────────────────────
+// ─── Level 3 — Full serpentine ──────────────────────────────────────────────
+// Enter top-left col 1, serpentine all the way down
 const L3_GRID = parseGrid([
-  'PPPPPPPPPPPPPPBB', // row 0  right (cols 0-13)
-  'BBBBBBBBBBBBBPBB', // row 1  down col 13
-  'PPPPPPPPPPPPPPBB', // row 2  left (cols 0-13)
-  'PBBBBBBBBBBBBBBB', // row 3  down col 0
-  'PPPPPPPPPPPPPPBB', // row 4  right (cols 0-13)
-  'BBBBBBBBBBBBBPBB', // row 5  down col 13
-  'PPPPPPPPPPPPPPBB', // row 6  left (cols 0-13)
-  'PBBBBBBBBBBBBBBB', // row 7  down col 0
-  'PPPPPPPPPPPPPPPP', // row 8  right (cols 0-15)
-  'BBBBBBBBBBBBBBBP', // row 9  down col 15
-  'BBBBBBBBBBBBBBBC', // row 10 core at col 15
+  'BPPPPPPPB', // row 0   right (cols 1-7)
+  'BBBBBBBPB', // row 1   down col 7
+  'BPPPPPPPB', // row 2   left (cols 1-7)
+  'BPBBBBBBB', // row 3   down col 1
+  'BPPPPPPPB', // row 4   right (cols 1-7)
+  'BBBBBBBPB', // row 5   down col 7
+  'BPPPPPPPB', // row 6   left (cols 1-7)
+  'BPBBBBBBB', // row 7   down col 1
+  'BPPPPPPPB', // row 8   right (cols 1-7)
+  'BBBBBBBPB', // row 9   down col 7
+  'BPPPPPPPB', // row 10  left (cols 1-7)
+  'BPBBBBBBB', // row 11  down col 1
+  'BPPPPPPPB', // row 12  right (cols 1-7)
+  'BBBBBBBPB', // row 13  down col 7
+  'BBBBBBBPB', // row 14
+  'BBBBBBBCB', // row 15  core col 7
 ]);
 const L3_PATH = [
-  { col: 0, row: 0 }, { col: 13, row: 0 },
-  { col: 13, row: 2 }, { col: 0, row: 2 },
-  { col: 0, row: 4 }, { col: 13, row: 4 },
-  { col: 13, row: 6 }, { col: 0, row: 6 },
-  { col: 0, row: 8 }, { col: 15, row: 8 },
-  { col: 15, row: 10 },
+  { col: 1, row: 0 }, { col: 7, row: 0 },
+  { col: 7, row: 2 }, { col: 1, row: 2 },
+  { col: 1, row: 4 }, { col: 7, row: 4 },
+  { col: 7, row: 6 }, { col: 1, row: 6 },
+  { col: 1, row: 8 }, { col: 7, row: 8 },
+  { col: 7, row: 10 }, { col: 1, row: 10 },
+  { col: 1, row: 12 }, { col: 7, row: 12 },
+  { col: 7, row: 15 },
 ];
 
-// ─── Level 4 — Two entry points ──────────────────────────────────────────────
-// Path A enters top-left, path B enters mid-left. Both converge at row 9.
+// ─── Level 4 — Two entry points ─────────────────────────────────────────────
+// Path A enters top-left col 0, Path B enters top-right col 6.
+// They merge at row 3, then zigzag down to core.
 const L4_GRID = parseGrid([
-  'PPPPPPPBBBBBBBBB', // row 0  path A enter (cols 0-6)
-  'BBBBBBPBBBBBBBBB', // row 1  down col 6
-  'BBBBBBPBBBBBBBBB', // row 2  down col 6
-  'BBBBBBPBBBBBBBBB', // row 3  down col 6
-  'BBBBBBPBBBBBBBBB', // row 4  down col 6
-  'BBBBBBPPPPPBBBBB', // row 5  right (cols 6-10)
-  'BBBBBBBBBBPBBBBB', // row 6  down col 10
-  'PPPPPPPBBBPBBBBB', // row 7  path B enter (cols 0-6) + col 10
-  'BBBBBBPBBBPBBBBB', // row 8  down col 6 + col 10
-  'BBBBBBPPPPPPPPPP', // row 9  merge right (cols 6-15)
-  'BBBBBBBBBBBBBBBC', // row 10 core at col 15
+  'PBBBBBPBB', // row 0   A col 0, B col 6
+  'PBBBBBPBB', // row 1
+  'PBBBBBPBB', // row 2
+  'PPPPPPPBB', // row 3   merge (cols 0-6)
+  'BBBBBBPBB', // row 4   down col 6
+  'BBBBBBPBB', // row 5
+  'BPPPPPPBB', // row 6   left (cols 1-6)
+  'BPBBBBBBB', // row 7   down col 1
+  'BPBBBBBBB', // row 8
+  'BPPPPPPPB', // row 9   right (cols 1-7)
+  'BBBBBBBPB', // row 10  down col 7
+  'BBBBBBBPB', // row 11
+  'BPPPPPPPB', // row 12  left (cols 1-7)
+  'BPBBBBBBB', // row 13  down col 1
+  'BPPPPBBBB', // row 14  right (cols 1-4)
+  'BBBBCBBBB', // row 15  core col 4
 ]);
 const L4_PATH_A = [
-  { col: 0, row: 0 }, { col: 6, row: 0 },
-  { col: 6, row: 5 }, { col: 10, row: 5 },
-  { col: 10, row: 9 }, { col: 15, row: 9 }, { col: 15, row: 10 },
+  { col: 0, row: 0 }, { col: 0, row: 3 },
+  { col: 6, row: 3 }, { col: 6, row: 6 },
+  { col: 1, row: 6 }, { col: 1, row: 9 },
+  { col: 7, row: 9 }, { col: 7, row: 12 },
+  { col: 1, row: 12 }, { col: 1, row: 14 },
+  { col: 4, row: 14 }, { col: 4, row: 15 },
 ];
 const L4_PATH_B = [
-  { col: 0, row: 7 }, { col: 6, row: 7 },
-  { col: 6, row: 9 }, { col: 10, row: 9 },
-  { col: 15, row: 9 }, { col: 15, row: 10 },
+  { col: 6, row: 0 }, { col: 6, row: 6 },
+  { col: 1, row: 6 }, { col: 1, row: 9 },
+  { col: 7, row: 9 }, { col: 7, row: 12 },
+  { col: 1, row: 12 }, { col: 1, row: 14 },
+  { col: 4, row: 14 }, { col: 4, row: 15 },
 ];
 
-// ─── Level 5 — Boss level ─────────────────────────────────────────────────────
-// Path A enters top-left, path B enters mid-left. Both merge on row 8.
+// ─── Level 5 — Boss level, two entries ──────────────────────────────────────
+// Path A enters top-left col 1, Path B enters top-right col 7.
+// Dense serpentine after merge.
 const L5_GRID = parseGrid([
-  'BBBBBBBBBBBBBBBB', // row 0
-  'PPPPPPBBBBBBBBBB', // row 1  path A enter (cols 0-5)
-  'BBBBBPBBBBBBBBBB', // row 2  down col 5
-  'BBBBBPBBBBBBBBBB', // row 3  down col 5
-  'BBBBBPPPPPPPBBBB', // row 4  right (cols 5-11)
-  'BBBBBBBBBBBPBBBB', // row 5  down col 11
-  'PPPPPPBBBBBPBBBB', // row 6  path B enter (cols 0-5) + col 11
-  'BBBBBPBBBBBPBBBB', // row 7  down col 5 + col 11
-  'BBBBBPPPPPPPPPPP', // row 8  merge right (cols 5-15)
-  'BBBBBBBBBBBBBBBP', // row 9  down col 15
-  'BBBBBBBBBBBBBBBC', // row 10 core at col 15
+  'BPBBBBBPB', // row 0   A col 1, B col 7
+  'BPBBBBBPB', // row 1
+  'BPPPPPPPB', // row 2   merge (cols 1-7)
+  'BBBBBBBPB', // row 3   down col 7
+  'BPPPPPPPB', // row 4   left (cols 1-7)
+  'BPBBBBBBB', // row 5   down col 1
+  'BPPPPPPPB', // row 6   right (cols 1-7)
+  'BBBBBBBPB', // row 7   down col 7
+  'BPPPPPPPB', // row 8   left (cols 1-7)
+  'BPBBBBBBB', // row 9   down col 1
+  'BPPPPPPPB', // row 10  right (cols 1-7)
+  'BBBBBBBPB', // row 11  down col 7
+  'BPPPPPPPB', // row 12  left (cols 1-7)
+  'BPBBBBBBB', // row 13  down col 1
+  'BPPPPPPPB', // row 14  right (cols 1-7)
+  'BBBBBBBCB', // row 15  core col 7
 ]);
 const L5_PATH_A = [
-  { col: 0, row: 1 }, { col: 5, row: 1 },
-  { col: 5, row: 4 }, { col: 11, row: 4 },
-  { col: 11, row: 8 }, { col: 15, row: 8 },
-  { col: 15, row: 10 },
+  { col: 1, row: 0 }, { col: 1, row: 2 },
+  { col: 7, row: 2 }, { col: 7, row: 4 },
+  { col: 1, row: 4 }, { col: 1, row: 6 },
+  { col: 7, row: 6 }, { col: 7, row: 8 },
+  { col: 1, row: 8 }, { col: 1, row: 10 },
+  { col: 7, row: 10 }, { col: 7, row: 12 },
+  { col: 1, row: 12 }, { col: 1, row: 14 },
+  { col: 7, row: 14 }, { col: 7, row: 15 },
 ];
 const L5_PATH_B = [
-  { col: 0, row: 6 }, { col: 5, row: 6 },
-  { col: 5, row: 8 }, { col: 11, row: 8 },
-  { col: 15, row: 8 }, { col: 15, row: 10 },
+  { col: 7, row: 0 }, { col: 7, row: 4 },
+  { col: 1, row: 4 }, { col: 1, row: 6 },
+  { col: 7, row: 6 }, { col: 7, row: 8 },
+  { col: 1, row: 8 }, { col: 1, row: 10 },
+  { col: 7, row: 10 }, { col: 7, row: 12 },
+  { col: 1, row: 12 }, { col: 1, row: 14 },
+  { col: 7, row: 14 }, { col: 7, row: 15 },
 ];
 
 // ─── Exported level configs ───────────────────────────────────────────────────
 export const LEVELS: LevelConfig[] = [
   // Level 1 — Easy, 4 waves
   {
-    cols: 16, rows: 11,
+    cols: 9, rows: 16,
     grid: L1_GRID,
     paths: [L1_PATH],
     startGold: 150,
@@ -151,7 +199,7 @@ export const LEVELS: LevelConfig[] = [
   },
   // Level 2 — Medium, 5 waves
   {
-    cols: 16, rows: 11,
+    cols: 9, rows: 16,
     grid: L2_GRID,
     paths: [L2_PATH],
     startGold: 150,
@@ -166,7 +214,7 @@ export const LEVELS: LevelConfig[] = [
   },
   // Level 3 — Hard serpentine, 5 waves
   {
-    cols: 16, rows: 11,
+    cols: 9, rows: 16,
     grid: L3_GRID,
     paths: [L3_PATH],
     startGold: 150,
@@ -181,7 +229,7 @@ export const LEVELS: LevelConfig[] = [
   },
   // Level 4 — Two entry points, mamie appears
   {
-    cols: 16, rows: 11,
+    cols: 9, rows: 16,
     grid: L4_GRID,
     paths: [L4_PATH_A, L4_PATH_B],
     startGold: 150,
@@ -197,7 +245,7 @@ export const LEVELS: LevelConfig[] = [
   },
   // Level 5 — Boss level, 7 waves
   {
-    cols: 16, rows: 11,
+    cols: 9, rows: 16,
     grid: L5_GRID,
     paths: [L5_PATH_A, L5_PATH_B],
     startGold: 150,
