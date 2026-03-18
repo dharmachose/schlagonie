@@ -116,6 +116,15 @@ export const UPGRADE_EMOJIS: Record<TowerType, Record<number, string>> = {
 
 export const SELL_REFUND_RATIO = 0.5;
 
+// ─── Projectile emojis per tower type ────────────────────────────────────────
+export const PROJECTILE_EMOJIS: Record<TowerType, string> = {
+  canon: '🍺',
+  baffe: '👊',
+  piege: '🍃',
+  mortier: '💣',
+  glace: '❄️',
+};
+
 // ─── Enemy definitions ────────────────────────────────────────────────────────
 export const ENEMY_DEFS: Record<EnemyType, Omit<Enemy, 'id' | 'pos' | 'pathIndex' | 'pathProgress' | 'alive' | 'reached' | 'slow' | 'slowTimer' | 'frozen' | 'frozenTimer' | 'spawnDelay' | 'spawned'>> = {
   baffeur: {

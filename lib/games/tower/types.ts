@@ -63,6 +63,7 @@ export interface Projectile {
   freezeDuration: number;
   color: string;
   dead: boolean;
+  towerType: TowerType;
 }
 
 // ─── Particle ────────────────────────────────────────────────────────────────
