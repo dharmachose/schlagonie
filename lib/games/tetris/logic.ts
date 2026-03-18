@@ -13,15 +13,76 @@ export const DROP_SPEED: Record<DifficultyLevel, number> = {
 
 export type TetrominoType = 'I' | 'O' | 'T' | 'S' | 'Z' | 'J' | 'L';
 
-// Rasta color palette: rouge / jaune-or / vert (3 nuances de chaque)
-export const PIECES: Record<TetrominoType, { cells: [number, number][]; color: string; highlight: string }> = {
-  I: { cells: [[-1,0],[0,0],[1,0],[2,0]], color: '#00C851', highlight: '#00FF66' }, // vert vif
-  O: { cells: [[0,0],[0,1],[1,0],[1,1]],  color: '#FFD700', highlight: '#FFF04D' }, // or
-  T: { cells: [[0,-1],[0,0],[0,1],[-1,0]], color: '#E8212E', highlight: '#FF5566' }, // rouge
-  S: { cells: [[0,0],[0,1],[-1,-1],[-1,0]], color: '#22AA44', highlight: '#44DD66' }, // vert forêt
-  Z: { cells: [[-1,0],[-1,1],[0,-1],[0,0]], color: '#CC0022', highlight: '#FF3344' }, // rouge foncé
-  J: { cells: [[-1,-1],[0,-1],[0,0],[0,1]], color: '#FFCC00', highlight: '#FFE84D' }, // jaune
-  L: { cells: [[-1,1],[0,-1],[0,0],[0,1]],  color: '#FF6600', highlight: '#FF9933' }, // orange-rouge
+// Essences des Vosges — chaque pièce = un bois différent
+export const PIECES: Record<TetrominoType, {
+  cells: [number, number][];
+  color: string;
+  highlight: string;
+  wood: { bg: string; border: string };
+}> = {
+  // I — Pin des Vosges : grain long, jaune-brun clair
+  I: {
+    cells: [[-1,0],[0,0],[1,0],[2,0]],
+    color: '#C8A06E', highlight: '#DEB887',
+    wood: {
+      bg: `repeating-linear-gradient(87deg, transparent 0, transparent 3px, rgba(0,0,0,0.08) 3px, rgba(0,0,0,0.08) 4px, transparent 4px, transparent 7px), linear-gradient(175deg, #DEB887 0%, #C8A06E 45%, #A0784A 100%)`,
+      border: '#C8A06E',
+    },
+  },
+  // O — Chêne : coupe transversale avec cernes concentriques
+  O: {
+    cells: [[0,0],[0,1],[1,0],[1,1]],
+    color: '#8B5E3C', highlight: '#A0724E',
+    wood: {
+      bg: `repeating-radial-gradient(ellipse at 50% 50%, transparent 0, transparent 2px, rgba(0,0,0,0.12) 2px, rgba(0,0,0,0.12) 3px), linear-gradient(145deg, #A0724E 0%, #8B5E3C 50%, #6B3E26 100%)`,
+      border: '#8B5E3C',
+    },
+  },
+  // T — Noyer : grain dense, chocolat foncé
+  T: {
+    cells: [[0,-1],[0,0],[0,1],[-1,0]],
+    color: '#5C3317', highlight: '#7A4A22',
+    wood: {
+      bg: `repeating-linear-gradient(86deg, transparent 0, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 3px, transparent 3px, transparent 5px), linear-gradient(175deg, #7A4A22 0%, #5C3317 50%, #3D2108 100%)`,
+      border: '#7A4A22',
+    },
+  },
+  // S — Bouleau : crème ivoire avec marques sombres d'écorce
+  S: {
+    cells: [[0,0],[0,1],[-1,-1],[-1,0]],
+    color: '#C4A882', highlight: '#F5ECD8',
+    wood: {
+      bg: `repeating-linear-gradient(88deg, transparent 0, transparent 4px, rgba(80,50,20,0.12) 4px, rgba(80,50,20,0.12) 5px, transparent 5px, transparent 10px), repeating-linear-gradient(92deg, transparent 0, transparent 8px, rgba(80,50,20,0.06) 8px, rgba(80,50,20,0.06) 9px), linear-gradient(175deg, #F5ECD8 0%, #E8D5B7 40%, #C4A882 100%)`,
+      border: '#C4A882',
+    },
+  },
+  // Z — Cerisier : brun-rouge chaleureux
+  Z: {
+    cells: [[-1,0],[-1,1],[0,-1],[0,0]],
+    color: '#8B3A3A', highlight: '#A84D4D',
+    wood: {
+      bg: `repeating-linear-gradient(87deg, transparent 0, transparent 3px, rgba(0,0,0,0.09) 3px, rgba(0,0,0,0.09) 4px, transparent 4px, transparent 6px), linear-gradient(175deg, #A84D4D 0%, #8B3A3A 50%, #6B2424 100%)`,
+      border: '#A84D4D',
+    },
+  },
+  // J — Érable : très clair, grain très fin
+  J: {
+    cells: [[-1,-1],[0,-1],[0,0],[0,1]],
+    color: '#D4A574', highlight: '#E8C49A',
+    wood: {
+      bg: `repeating-linear-gradient(88deg, transparent 0, transparent 2px, rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 3px, transparent 3px, transparent 5px), linear-gradient(175deg, #E8C49A 0%, #D4A574 45%, #B88050 100%)`,
+      border: '#D4A574',
+    },
+  },
+  // L — Mélèze : brun-orange ambré, résineux
+  L: {
+    cells: [[-1,1],[0,-1],[0,0],[0,1]],
+    color: '#9C6B32', highlight: '#BA8346',
+    wood: {
+      bg: `repeating-linear-gradient(86deg, transparent 0, transparent 3px, rgba(0,0,0,0.1) 3px, rgba(0,0,0,0.1) 4px, transparent 4px, transparent 8px), linear-gradient(175deg, #BA8346 0%, #9C6B32 50%, #7A4F1E 100%)`,
+      border: '#BA8346',
+    },
+  },
 };
 
 // Board stores TetrominoType so we can retrieve color + emoji on render
