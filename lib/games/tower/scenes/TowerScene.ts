@@ -120,11 +120,20 @@ export default class TowerScene extends Phaser.Scene {
 
     this.drawGrid();
 
+    // Prevent page scrolling on the canvas
+    const canvas = this.game.canvas;
+    canvas.style.touchAction = 'none';
+    canvas.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+    canvas.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => this.handleClick(p));
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       this.hoverCol = Math.floor((p.x - this.ox) / this.T);
       this.hoverRow = Math.floor((p.y - this.oy) / this.T);
     });
+    // Clear hover on touch end so range preview doesn't persist on mobile
+    this.input.on('pointerup', () => { this.hoverCol = -1; this.hoverRow = -1; });
+    this.input.on('pointerupoutside', () => { this.hoverCol = -1; this.hoverRow = -1; });
 
     this.emitState();
   }
