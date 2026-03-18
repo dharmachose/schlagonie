@@ -41,17 +41,20 @@ export default function TowerGame({ level, onLevelComplete, onGameOver }: GamePr
       const containerW = container.clientWidth;
       const containerH = container.clientHeight;
 
-      // Use both width and height to maximize canvas fill
-      const tileSize = Math.floor(Math.min(containerW / 16, containerH / 11));
-      const gameW = tileSize * 16;
-      const gameH = tileSize * 11;
+      // Tile size based on width (limiting factor in portrait mode)
+      const tileSize = Math.floor(containerW / 16);
+      // Canvas fills the entire container, grid centered inside
+      const gameW = containerW;
+      const gameH = containerH;
+      const gridOffsetX = Math.floor((gameW - tileSize * 16) / 2);
+      const gridOffsetY = Math.floor((gameH - tileSize * 11) / 2);
 
       const game = new Phaser.Game({
         type: Phaser.AUTO,
         width: gameW,
         height: gameH,
         parent: container,
-        backgroundColor: '#0a1a0a',
+        backgroundColor: '#0a150a',
         scale: { mode: Phaser.Scale.NONE },
         scene: [TowerScene],
       });
@@ -59,6 +62,8 @@ export default function TowerGame({ level, onLevelComplete, onGameOver }: GamePr
       game.scene.start('TowerScene', {
         levelIndex: lvlIdx,
         tileSize,
+        gridOffsetX,
+        gridOffsetY,
         events: {
           onStateChange: handleStateChange,
           onLevelComplete,
