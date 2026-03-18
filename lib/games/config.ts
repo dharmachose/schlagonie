@@ -43,9 +43,9 @@ export const GAMES: GameMeta[] = [
   },
   {
     id: 'tower',
-    title: "Défense d'Aydoilles",
+    title: 'Défense de La Baffe',
     emoji: '🏰',
-    description: "La Baffe attaque ! Place tes tours et défends la Mairie d'Aydoilles contre les hordes de baffeurs !",
+    description: "Aydoilles attaque ! Construis, améliore et vends tes tours pour défendre la Mairie de La Baffe — upgrades, ciblage, pause et vitesse x2 !",
     color: '#8B6914',
     available: true,
   },

@@ -1,137 +1,141 @@
-import type { TowerType, EnemyType, Tower, Enemy } from './types';
+import type { TowerType, EnemyType, TowerBaseDef, EnemyBaseDef } from './types';
 
-// ─── Tower definitions ───────────────────────────────────────────────────────
-export const TOWER_DEFS: Record<TowerType, Omit<Tower, 'id' | 'col' | 'row'>> = {
-  canon: {
-    type: 'canon',
+export const CELL_SIZE = 56;           // px per grid cell
+export const PLACEMENT_DURATION = 15;  // seconds
+
+// ─── Tower definitions ─────────────────────────────────────────────────────
+// Defending La Baffe 🏘️ against Aydoilles invaders
+export const TOWER_DEFS: Record<TowerType, TowerBaseDef> = {
+  brasseur: {
     emoji: '🍺',
-    damage: 20,
+    label: 'Canon à Bières',
+    description: 'Tour polyvalente. Dégâts corrects, bonne portée.',
+    cost: 60,
+    damage: 25,
     range: 130,
-    fireRate: 1,
-    lastShot: 0,
+    fireRate: 1.0,
     aoe: 0,
-    slow: 1,
+    slowFactor: 1,
     freezeDuration: 0,
     color: '#D4A017',
+    upgrades: [
+      { cost: 70,  damage: 45,  range: 150, fireRate: 1.2, label: 'Bière Pression+ : +dégâts portée' },
+      { cost: 120, damage: 80,  range: 175, fireRate: 1.5, label: 'Grand Cru Artisanal : maîtrise totale' },
+    ],
   },
-  baffe: {
-    type: 'baffe',
+  claque: {
     emoji: '👋',
+    label: 'Tourelle Claque',
+    description: 'Cadence très élevée, faibles dégâts, courte portée.',
+    cost: 35,
     damage: 10,
     range: 90,
     fireRate: 2.5,
-    lastShot: 0,
     aoe: 0,
-    slow: 1,
+    slowFactor: 1,
     freezeDuration: 0,
     color: '#FF6B35',
+    upgrades: [
+      { cost: 40, damage: 18, range: 100, fireRate: 3.2, label: 'Gifle Sonore : cadence accrue' },
+      { cost: 80, damage: 32, range: 115, fireRate: 4.0, label: 'Baffe Légendaire de La Baffe' },
+    ],
   },
-  piege: {
-    type: 'piege',
+  forestier: {
     emoji: '🌲',
+    label: 'Piège Forestier',
+    description: 'Ralentit les ennemis à 40% de leur vitesse.',
+    cost: 45,
     damage: 5,
-    range: 70,
-    fireRate: 1,
-    lastShot: 0,
+    range: 80,
+    fireRate: 1.0,
     aoe: 0,
-    slow: 0.5,
+    slowFactor: 0.4,
     freezeDuration: 0,
-    color: '#228B22',
+    color: '#4CAF50',
+    upgrades: [
+      { cost: 55,  damage: 8,  range: 95,  fireRate: 1.2, slowFactor: 0.30, label: 'Forêt Dense : 30% vitesse' },
+      { cost: 100, damage: 12, range: 115, fireRate: 1.5, slowFactor: 0.20, label: 'Forêt Enchantée : 20% vitesse' },
+    ],
   },
   mortier: {
-    type: 'mortier',
     emoji: '💣',
-    damage: 45,
-    range: 160,
+    label: 'Mortier Vosgien',
+    description: 'Dégâts de zone (rayon 50px), très longue portée.',
+    cost: 90,
+    damage: 50,
+    range: 175,
     fireRate: 0.4,
-    lastShot: 0,
     aoe: 50,
-    slow: 1,
+    slowFactor: 1,
     freezeDuration: 0,
-    color: '#555555',
+    color: '#795548',
+    upgrades: [
+      { cost: 100, damage: 85,  range: 200, fireRate: 0.5, aoe: 65,  label: 'Mortier Lourd : zone 65px' },
+      { cost: 180, damage: 140, range: 225, fireRate: 0.6, aoe: 82,  label: 'Super Mortier : zone 82px' },
+    ],
   },
   glace: {
-    type: 'glace',
     emoji: '❄️',
+    label: 'Canon Glace',
+    description: 'Gèle les ennemis 2s (immobiles).',
+    cost: 70,
     damage: 8,
-    range: 110,
+    range: 115,
     fireRate: 0.6,
-    lastShot: 0,
     aoe: 0,
-    slow: 1,
-    freezeDuration: 2000,
-    color: '#4FC3F7',
+    slowFactor: 1,
+    freezeDuration: 2,
+    color: '#4DD0E1',
+    upgrades: [
+      { cost: 80,  damage: 14, range: 135, fireRate: 0.8, freezeDuration: 3, label: 'Givre+ : gel 3s' },
+      { cost: 140, damage: 22, range: 160, fireRate: 1.0, freezeDuration: 4, label: 'Blizzard Vosgien : gel 4s' },
+    ],
   },
 };
 
-export const TOWER_COSTS: Record<TowerType, number> = {
-  canon: 60,
-  baffe: 35,
-  piege: 45,
-  mortier: 90,
-  glace: 70,
-};
-
-export const TOWER_LABELS: Record<TowerType, string> = {
-  canon: 'Canon à Bières',
-  baffe: 'Tourelle Baffe',
-  piege: 'Piège Forestier',
-  mortier: 'Mortier Vosgien',
-  glace: 'Canon Glace',
-};
-
-// ─── Enemy definitions ────────────────────────────────────────────────────────
-export const ENEMY_DEFS: Record<EnemyType, Omit<Enemy, 'id' | 'pos' | 'pathIndex' | 'pathProgress' | 'alive' | 'reached' | 'slow' | 'slowTimer' | 'frozen' | 'frozenTimer' | 'spawnDelay' | 'spawned'>> = {
-  baffeur: {
-    type: 'baffeur',
+// ─── Enemy definitions ─────────────────────────────────────────────────────
+// Aydoilles attacking La Baffe 🥊
+export const ENEMY_DEFS: Record<EnemyType, EnemyBaseDef> = {
+  aydoillard: {
     emoji: '🥊',
-    hp: 50,
-    maxHp: 50,
-    speed: 70,
+    label: 'Aydoillard',
+    hp: 60,
+    speed: 80,
     reward: 8,
+    liveDamage: 1,
   },
   sanglier: {
-    type: 'sanglier',
     emoji: '🐗',
-    hp: 30,
-    maxHp: 30,
-    speed: 130,
+    label: 'Sanglier d\'Aydoilles',
+    hp: 35,
+    speed: 140,
     reward: 6,
+    liveDamage: 1,
   },
-  rasta: {
-    type: 'rasta',
+  hippie: {
     emoji: '🌿',
-    hp: 180,
-    maxHp: 180,
+    label: 'Hippie Aydoillard',
+    hp: 200,
     speed: 45,
     reward: 20,
+    liveDamage: 1,
   },
   mamie: {
-    type: 'mamie',
     emoji: '👵',
-    hp: 70,
-    maxHp: 70,
-    speed: 65,
+    label: 'Mamie Aydoillarde',
+    hp: 80,
+    speed: 60,
     reward: 25,
+    liveDamage: 1,
+    healRadius: 65,
+    healRate: 10,
   },
   boss: {
-    type: 'boss',
     emoji: '👑',
-    hp: 600,
-    maxHp: 600,
+    label: 'Chef d\'Aydoilles',
+    hp: 700,
     speed: 35,
-    reward: 80,
+    reward: 100,
+    liveDamage: 5,
   },
 };
-
-// Lives taken when enemy reaches CORE
-export const ENEMY_LIVES_DAMAGE: Record<EnemyType, number> = {
-  baffeur: 1,
-  sanglier: 1,
-  rasta: 2,
-  mamie: 1,
-  boss: 5,
-};
-
-export const PLACEMENT_DURATION = 15000; // ms
-export const TILE_SIZE = 40;             // px
