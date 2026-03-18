@@ -39,8 +39,10 @@ export default function TowerGame({ level, onLevelComplete, onGameOver }: GamePr
 
       const container = containerRef.current!;
       const containerW = container.clientWidth;
+      const containerH = container.clientHeight;
 
-      const tileSize = Math.floor(containerW / 16);
+      // Use both width and height to maximize canvas fill
+      const tileSize = Math.floor(Math.min(containerW / 16, containerH / 11));
       const gameW = tileSize * 16;
       const gameH = tileSize * 11;
 

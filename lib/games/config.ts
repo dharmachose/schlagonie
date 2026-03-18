@@ -43,9 +43,9 @@ export const GAMES: GameMeta[] = [
   },
   {
     id: 'tower',
-    title: "Défense d'Aydoilles",
-    emoji: '🏰',
-    description: "La Baffe attaque ! Place tes tours et défends la Mairie d'Aydoilles contre les hordes de baffeurs !",
+    title: "Clash of Village",
+    emoji: '⚔️',
+    description: "Aydoilles attaque ! Place tes tours et défends le village de La Baffe contre les hordes d'envahisseurs !",
     color: '#8B6914',
     available: true,
   },

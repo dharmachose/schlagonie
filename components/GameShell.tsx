@@ -144,7 +144,7 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
                 Niveau {level} réussi !
               </div>
               <div style={{ color: 'var(--text-muted)', fontSize: '15px', textAlign: 'center', marginTop: '6px' }}>
-                🌲 La forêt est fière de toi
+                ⚔️ La Baffe est sauvée !
               </div>
             </div>
             <div style={{
@@ -210,7 +210,7 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
                 Game Over
               </div>
               <div style={{ color: 'var(--text-muted)', fontSize: '15px', textAlign: 'center', marginTop: '6px' }}>
-                Le brouillard des Vosges t&apos;a eu 🌫️
+                Aydoilles a conquis La Baffe 🌫️
               </div>
             </div>
             <div style={{ display: 'flex', gap: '12px', flexDirection: 'column', width: '100%' }}>
