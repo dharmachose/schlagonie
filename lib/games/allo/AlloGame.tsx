@@ -5,14 +5,21 @@ import type { GameProps, DifficultyLevel } from '@/lib/types';
 import { QUESTIONS, WIN_SCORE, QUESTION_COUNT, QUESTION_TIME } from './questions';
 import type { AlloQuestion } from './types';
 
-function shuffleAndPick(level: DifficultyLevel): AlloQuestion[] {
-  const eligible = QUESTIONS.filter(q => q.minLevel <= level);
-  const arr = [...eligible];
-  for (let i = arr.length - 1; i > 0; i--) {
+function shuffleArr(arr: AlloQuestion[]): AlloQuestion[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+    [a[i], a[j]] = [a[j], a[i]];
   }
-  return arr.slice(0, QUESTION_COUNT[level]);
+  return a;
+}
+
+function shuffleAndPick(level: DifficultyLevel): AlloQuestion[] {
+  // Questions du niveau exact en priorité (jamais vues aux niveaux précédents)
+  const thisLevel = shuffleArr(QUESTIONS.filter(q => q.minLevel === level));
+  // Questions des niveaux inférieurs en complément si besoin
+  const lowerLevels = shuffleArr(QUESTIONS.filter(q => q.minLevel < level));
+  return [...thisLevel, ...lowerLevels].slice(0, QUESTION_COUNT[level]);
 }
 
 type Phase = 'reading' | 'answering' | 'feedback';
