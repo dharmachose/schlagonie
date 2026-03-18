@@ -184,7 +184,7 @@ export const QUESTIONS: AlloQuestion[] = [
     correct: 'de son',
     explanation: "L'appartenance (filiation) se marque toujours avec 'de' : 'la fille de son père'. 'À' indique un lieu ou un destinataire, pas l'appartenance.",
     points: 100,
-    minLevel: 3,
+    minLevel: 1,
   },
   {
     id: 'ortho-du-maire-fille',
