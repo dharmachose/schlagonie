@@ -595,11 +595,11 @@ export const QUESTION_COUNT: Record<number, number> = {
 
 /** Score minimum pour valider le niveau */
 export const WIN_SCORE: Record<number, number> = {
-  1: 320,
-  2: 480,
-  3: 660,
-  4: 880,
-  5: 1200,
+  1: 240,
+  2: 340,
+  3: 460,
+  4: 580,
+  5: 700,
 };
 
 /** Temps alloué par question (secondes) */
