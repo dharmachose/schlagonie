@@ -15,12 +15,15 @@ interface StoreState {
   player: PlayerProfile | null;
   completedLevels: CompletedLevel[];
   totalPoints: number;
+  answeredQuestions: string[];
 
   setPlayer: (p: PlayerProfile) => void;
   recordCompletion: (gameId: GameId, level: DifficultyLevel, elapsedMs: number) => void;
   isLevelCompleted: (gameId: GameId, level: DifficultyLevel) => boolean;
   getBestTime: (gameId: GameId, level: DifficultyLevel) => number | null;
   getPointsForGame: (gameId: GameId) => number;
+  markQuestionAnswered: (questionId: string) => void;
+  isQuestionAnswered: (questionId: string) => boolean;
 }
 
 export const useStore = create<StoreState>()(
@@ -29,6 +32,7 @@ export const useStore = create<StoreState>()(
       player: null,
       completedLevels: [],
       totalPoints: 0,
+      answeredQuestions: [],
 
       setPlayer: (player) => set({ player }),
 
@@ -67,6 +71,12 @@ export const useStore = create<StoreState>()(
 
       getPointsForGame: (gameId) =>
         get().completedLevels.filter((c) => c.gameId === gameId).length,
+
+      markQuestionAnswered: (questionId) =>
+        set({ answeredQuestions: [...new Set([...get().answeredQuestions, questionId])] }),
+
+      isQuestionAnswered: (questionId) =>
+        get().answeredQuestions.includes(questionId),
     }),
     { name: 'shlagonie-store' }
   )

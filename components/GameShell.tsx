@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useStore } from '@/lib/store';
 import { LEVEL_LABELS } from '@/lib/games/config';
+import { getTributeQuestion } from '@/lib/tribute-questions';
 import type { GameId, DifficultyLevel } from '@/lib/types';
 
 interface Props {
@@ -19,15 +20,20 @@ interface Props {
 }
 
 type GameState = 'playing' | 'win' | 'gameover';
+type WinPhase = 'question' | 'thanks' | 'buttons';
 
 export default function GameShell({ gameId, gameTitle, gameEmoji, level, children }: Props) {
   const router = useRouter();
-  const { player, recordCompletion } = useStore();
+  const { player, recordCompletion, isQuestionAnswered, markQuestionAnswered } = useStore();
 
   const [state, setState] = useState<GameState>('playing');
   const [elapsedMs, setElapsedMs] = useState(0);
   const startRef = useRef(Date.now());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [winPhase, setWinPhase] = useState<WinPhase>('buttons');
+  const [answer, setAnswer] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Live timer
   useEffect(() => {
@@ -40,9 +46,9 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
 
   const handleLevelComplete = useCallback((ms: number) => {
     if (timerRef.current) clearInterval(timerRef.current);
-    setState('win');
     recordCompletion(gameId, level, ms);
-    // Fire-and-forget sync to Redis — local save already done above
+
+    // Fire-and-forget score sync
     if (player) {
       fetch('/api/scores', {
         method: 'POST',
@@ -57,18 +63,53 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
         }),
       }).catch(() => {/* silent — score already saved locally */});
     }
-  }, [gameId, level, player, recordCompletion]);
+
+    // Determine whether to show the tribute question
+    const question = getTributeQuestion(gameId, level);
+    const alreadyAnswered = question ? isQuestionAnswered(question.id) : true;
+    setWinPhase(question && !alreadyAnswered ? 'question' : 'buttons');
+    setState('win');
+  }, [gameId, level, player, recordCompletion, isQuestionAnswered]);
 
   const handleGameOver = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     setState('gameover');
   }, []);
 
+  const handleSubmitAnswer = useCallback(async () => {
+    if (!answer.trim() || !player) return;
+    const question = getTributeQuestion(gameId, level);
+    if (!question) return;
+
+    setSubmitting(true);
+    markQuestionAnswered(question.id);
+
+    // Fire-and-forget tribute submission
+    fetch('/api/tributes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        playerId: player.id,
+        playerName: player.name,
+        questionId: question.id,
+        question: question.text,
+        answer: answer.trim(),
+        answeredAt: Date.now(),
+      }),
+    }).catch(() => {/* silent failure */});
+
+    setSubmitting(false);
+    setWinPhase('thanks');
+    setTimeout(() => setWinPhase('buttons'), 2000);
+  }, [answer, player, gameId, level, markQuestionAnswered]);
+
   const formatTime = (ms: number) => {
     const s = Math.floor(ms / 1000);
     const m = Math.floor(s / 60);
     return `${m}:${String(s % 60).padStart(2, '0')}`;
   };
+
+  const tributeQuestion = getTributeQuestion(gameId, level);
 
   return (
     <div className="game-container">
@@ -131,6 +172,7 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
             display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
             gap: '20px', padding: '32px',
+            overflowY: 'auto',
           }} className="animate-bounce-in">
             <div style={{ fontSize: '80px', lineHeight: 1 }}>🏆</div>
             <div>
@@ -170,22 +212,94 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
             }}>
               ✓ Score sauvegardé
             </div>
-            <div style={{ display: 'flex', gap: '12px', flexDirection: 'column', width: '100%' }}>
-              {level < 5 && (
+
+            {/* Tribute question form */}
+            {winPhase === 'question' && tributeQuestion && (
+              <div style={{
+                width: '100%',
+                background: 'rgba(255,215,0,0.06)',
+                border: '1px solid rgba(255,215,0,0.3)',
+                borderRadius: '16px',
+                padding: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+              }}>
+                <div style={{
+                  fontSize: '17px',
+                  fontWeight: 700,
+                  color: 'var(--rasta-gold)',
+                  textAlign: 'center',
+                  lineHeight: 1.4,
+                }}>
+                  {tributeQuestion.text}
+                </div>
+                <textarea
+                  value={answer}
+                  onChange={(e) => setAnswer(e.target.value)}
+                  placeholder={tributeQuestion.placeholder}
+                  rows={3}
+                  style={{
+                    width: '100%',
+                    background: 'rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(255,215,0,0.25)',
+                    borderRadius: '10px',
+                    padding: '10px 12px',
+                    color: '#fff',
+                    fontSize: '15px',
+                    resize: 'none',
+                    fontFamily: 'inherit',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
                 <button
                   className="btn-rasta"
-                  onClick={() => router.push(`/games/${gameId}/${(level + 1) as DifficultyLevel}`)}
+                  onClick={handleSubmitAnswer}
+                  disabled={!answer.trim() || submitting}
+                  style={{ opacity: !answer.trim() || submitting ? 0.5 : 1 }}
                 >
-                  Niveau suivant →
+                  Envoyer 💌
                 </button>
-              )}
-              <button
-                className="btn-rasta btn-red"
-                onClick={() => router.push('/games')}
-              >
-                Retour aux jeux
-              </button>
-            </div>
+              </div>
+            )}
+
+            {/* Thanks message */}
+            {winPhase === 'thanks' && (
+              <div style={{
+                width: '100%',
+                background: 'rgba(50,205,50,0.1)',
+                border: '1px solid rgba(50,205,50,0.3)',
+                borderRadius: '16px',
+                padding: '20px',
+                textAlign: 'center',
+                color: 'var(--rasta-green-light)',
+                fontSize: '17px',
+                fontWeight: 700,
+              }}>
+                Merci ! Léonie va adorer 🌸
+              </div>
+            )}
+
+            {/* Navigation buttons */}
+            {winPhase === 'buttons' && (
+              <div style={{ display: 'flex', gap: '12px', flexDirection: 'column', width: '100%' }}>
+                {level < 5 && (
+                  <button
+                    className="btn-rasta"
+                    onClick={() => router.push(`/games/${gameId}/${(level + 1) as DifficultyLevel}`)}
+                  >
+                    Niveau suivant →
+                  </button>
+                )}
+                <button
+                  className="btn-rasta btn-red"
+                  onClick={() => router.push('/games')}
+                >
+                  Retour aux jeux
+                </button>
+              </div>
+            )}
           </div>
         )}
 

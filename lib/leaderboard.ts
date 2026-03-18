@@ -1,6 +1,15 @@
 import { neon, type NeonQueryFunction } from '@neondatabase/serverless';
 import type { GameId, DifficultyLevel, LeaderboardEntry, LevelCompletion } from './types';
 
+export interface TributeSubmission {
+  playerId: string;
+  playerName: string;
+  questionId: string;
+  question: string;
+  answer: string;
+  answeredAt: number;
+}
+
 function getSql() {
   const url = process.env.DATABASE_URL;
   if (!url) return null;
@@ -17,6 +26,21 @@ async function ensureTable(sql: NeonQueryFunction<any, any>) {
       level        INTEGER NOT NULL,
       elapsed_ms   INTEGER NOT NULL,
       completed_at BIGINT  NOT NULL
+    )
+  `;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function ensureTributesTable(sql: NeonQueryFunction<any, any>) {
+  await sql`
+    CREATE TABLE IF NOT EXISTS tributes (
+      id           SERIAL PRIMARY KEY,
+      player_id    TEXT   NOT NULL,
+      player_name  TEXT   NOT NULL,
+      question_id  TEXT   NOT NULL,
+      question     TEXT   NOT NULL,
+      answer       TEXT   NOT NULL,
+      answered_at  BIGINT NOT NULL
     )
   `;
 }
@@ -39,6 +63,26 @@ export async function submitScore(completion: LevelCompletion): Promise<boolean>
     return true;
   } catch (err) {
     console.error('[leaderboard] submitScore error', err);
+    return false;
+  }
+}
+
+export async function submitTribute(tribute: TributeSubmission): Promise<boolean> {
+  const sql = getSql();
+  if (!sql) {
+    console.error('[leaderboard] DATABASE_URL not configured — tribute not saved');
+    return false;
+  }
+  try {
+    await ensureTributesTable(sql);
+    const { playerId, playerName, questionId, question, answer, answeredAt } = tribute;
+    await sql`
+      INSERT INTO tributes (player_id, player_name, question_id, question, answer, answered_at)
+      VALUES (${playerId}, ${playerName}, ${questionId}, ${question}, ${answer}, ${answeredAt})
+    `;
+    return true;
+  } catch (err) {
+    console.error('[leaderboard] submitTribute error', err);
     return false;
   }
 }
