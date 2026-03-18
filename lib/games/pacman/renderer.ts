@@ -90,13 +90,14 @@ function drawDots(ctx: CanvasRenderingContext2D, state: GameState, ts: number): 
       const cy = r * ts + ts / 2;
 
       if (tile === 'dot') {
-        // Petite bière dorée (point)
-        ctx.fillStyle = COLORS.dot;
+        // Petit pot de Nutella (point)
+        // Pot marron
+        ctx.fillStyle = '#5C3317';
         ctx.beginPath();
         ctx.arc(cx, cy, ts * 0.12, 0, Math.PI * 2);
         ctx.fill();
-        // Mousse (petit reflet blanc en haut)
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        // Reflet doré (couvercle Nutella)
+        ctx.fillStyle = 'rgba(255,215,0,0.6)';
         ctx.beginPath();
         ctx.arc(cx, cy - ts * 0.04, ts * 0.06, 0, Math.PI * 2);
         ctx.fill();

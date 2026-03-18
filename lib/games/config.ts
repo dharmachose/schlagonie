@@ -21,7 +21,7 @@ export const GAMES: GameMeta[] = [
     id: 'match3',
     title: 'Crush des Vosges',
     emoji: '👋',
-    description: 'Aligne les baffes, sapins et bédots pour scorer !',
+    description: 'Aligne les baffes, sapins et cocas pour scorer !',
     color: '#FFD700',
     available: true,
   },

@@ -5,7 +5,7 @@ export default function PacmanPage() {
     <LevelSelectPage
       gameId="pacman"
       title="👑 Shlagonie Fuit !"
-      description="La reine Shlagonie fuit les fruits et légumes qui veulent la forcer à manger sainement. Mange toutes les bières pour leur échapper !"
+      description="La reine Shlagonie fuit les fruits et légumes qui veulent la forcer à manger sainement. Mange tout le Nutella pour leur échapper !"
       color="#DC143C"
       levelEmojis={{ 1: '🥬', 2: '🥕', 3: '🍆', 4: '🥦', 5: '🌶️' }}
       levelDetails={{

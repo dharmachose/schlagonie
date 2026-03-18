@@ -4,7 +4,7 @@ import type { TowerType, EnemyType, Tower, Enemy } from './types';
 export const TOWER_DEFS: Record<TowerType, Omit<Tower, 'id' | 'col' | 'row'>> = {
   canon: {
     type: 'canon',
-    emoji: '🍺',
+    emoji: '🥤',
     damage: 20,
     range: 130,
     fireRate: 1,
@@ -83,7 +83,7 @@ export const TOWER_COSTS: Record<TowerType, number> = {
 };
 
 export const TOWER_LABELS: Record<TowerType, string> = {
-  canon: 'Canon à Bières',
+  canon: 'Canon à Coca',
   baffe: 'Tourelle Baffe',
   piege: 'Piège Forestier',
   mortier: 'Mortier Vosgien',
@@ -107,7 +107,7 @@ export const UPGRADE_COSTS: Record<TowerType, Record<number, number>> = {
 };
 
 export const UPGRADE_EMOJIS: Record<TowerType, Record<number, string>> = {
-  canon:   { 1: '🍺', 2: '🍻', 3: '🥃' },
+  canon:   { 1: '🥤', 2: '🧃', 3: '🍫' },
   baffe:   { 1: '👋', 2: '🤜', 3: '💪' },
   piege:   { 1: '🌲', 2: '🌳', 3: '🏔️' },
   mortier: { 1: '💣', 2: '🧨', 3: '☄️' },
@@ -118,7 +118,7 @@ export const SELL_REFUND_RATIO = 0.5;
 
 // ─── Projectile emojis per tower type ────────────────────────────────────────
 export const PROJECTILE_EMOJIS: Record<TowerType, string> = {
-  canon: '🍺',
+  canon: '🥤',
   baffe: '👊',
   piege: '🍃',
   mortier: '💣',

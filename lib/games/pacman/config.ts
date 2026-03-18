@@ -6,7 +6,7 @@ export const COLORS = {
   wallFill: '#1a3a1a',
   wallStroke: '#228B22',
   wallGlow: 'rgba(34, 139, 34, 0.3)',
-  dot: '#FFD700',        // bières
+  dot: '#FFD700',        // nutella
   dotGlow: 'rgba(255, 215, 0, 0.4)',
   powerPellet: '#FF8C00', // munster
   pacman: '#FFD700',      // Shlagonie (reine dorée)
@@ -50,7 +50,7 @@ export const GHOST_COLORS: Record<string, string> = {
 export const LEVEL_CONFIG: Record<DifficultyLevel, LevelConfig> = {
   1: { pacmanSpeed: 5.0, ghostSpeed: 3.5, frightenedDuration: 10000, ghostCount: 2, fruitPoints: 100, fruitEmoji: '🧀' },
   2: { pacmanSpeed: 5.5, ghostSpeed: 4.5, frightenedDuration: 8000, ghostCount: 3, fruitPoints: 200, fruitEmoji: '🥨' },
-  3: { pacmanSpeed: 6.0, ghostSpeed: 5.5, frightenedDuration: 6000, ghostCount: 4, fruitPoints: 300, fruitEmoji: '🍺' },
+  3: { pacmanSpeed: 6.0, ghostSpeed: 5.5, frightenedDuration: 6000, ghostCount: 4, fruitPoints: 300, fruitEmoji: '🥤' },
   4: { pacmanSpeed: 6.5, ghostSpeed: 6.5, frightenedDuration: 4000, ghostCount: 4, fruitPoints: 400, fruitEmoji: '🥩' },
   5: { pacmanSpeed: 7.0, ghostSpeed: 7.5, frightenedDuration: 3000, ghostCount: 4, fruitPoints: 500, fruitEmoji: '🍖' },
 };

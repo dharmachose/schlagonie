@@ -1,7 +1,7 @@
 import type { DifficultyLevel } from '@/lib/types';
 
 // Gem types (Vosges themed)
-export const GEMS = ['🌲', '👋', '🍺', '🌿', '❄️', '🍄', '⛰️'];
+export const GEMS = ['🌲', '👋', '🥤', '🌿', '❄️', '🍄', '⛰️'];
 
 // Number of gem types and target score per level
 export const LEVEL_CONFIG: Record<DifficultyLevel, { gemTypes: number; gridSize: number; targetScore: number }> = {

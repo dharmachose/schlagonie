@@ -190,11 +190,11 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
         minHeight: 32,
       }}>
         <span style={{ color: '#FFD700', fontWeight: 700, fontFamily: 'monospace' }}>
-          🍺 {hud.score.toString().padStart(5, '0')}
+          🍫 {hud.score.toString().padStart(5, '0')}
         </span>
         <span style={{ letterSpacing: 2 }}>{livesDisplay.join('')}</span>
         <span style={{ color: '#666', fontSize: 11 }}>
-          {hud.dotsLeft > 0 ? `${hud.dotsLeft} 🍺` : 'Bravo !'}
+          {hud.dotsLeft > 0 ? `${hud.dotsLeft} 🍫` : 'Bravo !'}
         </span>
         {hud.scared && (
           <span style={{

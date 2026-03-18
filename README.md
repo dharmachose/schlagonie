@@ -15,9 +15,9 @@
 | Jeu | Thème | Niveaux |
 |-----|-------|---------|
 | 🌲 Mémoire des Vosges | Paires de cartes emoji vosgiennes | 5 |
-| 🪵 Tetris Shlagonie | Bûches, sapins, bédots | 5 |
+| 🪵 Tetris Shlagonie | Bûches, sapins, cocas | 5 |
 | 👋 Crush des Vosges | Match-3 avec gemmes des Vosges | 5 |
-| 🏃 Shlagonie Fuit ! | Pac-Man dans les rues d'Aydoilles | 5 |
+| 👑 Shlagonie Fuit ! | La reine fuit les légumes | 5 |
 
 ## Système de points
 
