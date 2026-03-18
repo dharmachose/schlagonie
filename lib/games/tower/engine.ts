@@ -150,6 +150,7 @@ function fireProjectile(tower: Tower, target: Enemy, nowMs: number): Projectile 
     freezeDuration: tower.freezeDuration,
     color: tower.color,
     dead: false,
+    towerType: tower.type,
   };
 }
 
@@ -191,7 +192,8 @@ export interface UpdateResult {
   goldEarned: number;
   waveComplete: boolean;
   kills: Array<{ enemy: Enemy; pos: Pos }>;
-  hits: Array<{ pos: Pos; aoe: boolean }>;
+  hits: Array<{ pos: Pos; aoe: boolean; damage: number }>;
+  shots: Array<{ towerId: string; col: number; row: number }>;
 }
 
 export function updateBattle(
@@ -204,7 +206,8 @@ export function updateBattle(
   let livesLost = 0;
   let goldEarned = 0;
   const kills: Array<{ enemy: Enemy; pos: Pos }> = [];
-  const hits: Array<{ pos: Pos; aoe: boolean }> = [];
+  const hits: Array<{ pos: Pos; aoe: boolean; damage: number }> = [];
+  const shots: Array<{ towerId: string; col: number; row: number }> = [];
 
   // ── Spawn enemies ──
   for (const e of state.enemies) {
@@ -248,6 +251,7 @@ export function updateBattle(
     const target = findTarget(tower, state.enemies);
     if (!target) continue;
     state.projectiles.push(fireProjectile(tower, target, nowMs));
+    shots.push({ towerId: tower.id, col: tower.col, row: tower.row });
   }
 
   // ── Move projectiles ──
@@ -266,10 +270,10 @@ export function updateBattle(
 
       if (proj.aoe > 0) {
         applyAoe(target.pos, proj.aoe, proj.damage, state.enemies, state.particles);
-        hits.push({ pos: { ...target.pos }, aoe: true });
+        hits.push({ pos: { ...target.pos }, aoe: true, damage: proj.damage });
       } else {
         target.hp -= proj.damage;
-        hits.push({ pos: { ...target.pos }, aoe: false });
+        hits.push({ pos: { ...target.pos }, aoe: false, damage: proj.damage });
         if (proj.freezeDuration > 0) {
           target.frozen = true;
           target.frozenTimer = proj.freezeDuration;
@@ -304,5 +308,5 @@ export function updateBattle(
   const allDone = state.enemies.every(e => !e.alive || e.reached);
   const waveComplete = allSpawned && allDone;
 
-  return { livesLost, goldEarned, waveComplete, kills, hits };
+  return { livesLost, goldEarned, waveComplete, kills, hits, shots };
 }
