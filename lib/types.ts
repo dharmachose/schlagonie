@@ -1,4 +1,4 @@
-export type GameId = 'memory' | 'tetris' | 'match3' | 'pacman' | 'joint' | 'tower';
+export type GameId = 'memory' | 'tetris' | 'match3' | 'pacman' | 'joint' | 'tower' | 'allo';
 export type DifficultyLevel = 1 | 2 | 3 | 4 | 5;
 
 export interface PlayerProfile {
