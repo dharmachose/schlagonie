@@ -506,9 +506,9 @@ export const WIN_SCORE: Record<number, number> = {
 
 /** Temps alloué par question (secondes) */
 export const QUESTION_TIME: Record<number, number> = {
-  1: 20,
-  2: 17,
-  3: 15,
-  4: 13,
-  5: 10,
+  1: 30,
+  2: 26,
+  3: 22,
+  4: 18,
+  5: 14,
 };
