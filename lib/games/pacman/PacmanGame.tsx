@@ -49,12 +49,12 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
       if (!state) return;
       const { cols, rows } = state.mazeDef;
       const rect = container.getBoundingClientRect();
-      // Leave space for HUD (40px) and D-pad row (70px) + safe area
-      const availH = rect.height - 120;
-      const availW = rect.width - 8;
+      // Reserve: HUD ~36px + D-pad ~56px + gaps ~16px = ~108px
+      const availH = rect.height - 108;
+      const availW = rect.width - 12;
       const byW = Math.floor(availW / cols);
       const byH = Math.floor(availH / rows);
-      tileSizeRef.current = Math.max(Math.min(byW, byH, 28), 10);
+      tileSizeRef.current = Math.max(Math.min(byW, byH), 10);
 
       const canvas = canvasRef.current;
       if (canvas) {
@@ -178,16 +178,19 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
       ref={containerRef}
       style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center',
-        height: '100%', gap: 6, padding: '6px 4px',
+        justifyContent: 'center',
+        height: '100%', gap: 4, padding: '4px 4px',
+        paddingBottom: 'max(4px, env(safe-area-inset-bottom))',
         background: '#0d1a0d',
+        overflow: 'hidden',
       }}
     >
       {/* HUD */}
       <div style={{
-        display: 'flex', gap: 16, alignItems: 'center', fontSize: 13,
-        padding: '4px 12px', borderRadius: 8,
+        display: 'flex', gap: 12, alignItems: 'center', fontSize: 13,
+        padding: '3px 10px', borderRadius: 8,
         background: 'rgba(0,0,0,0.4)',
-        minHeight: 32,
+        minHeight: 28, flexShrink: 0,
       }}>
         <span style={{ color: '#FFD700', fontWeight: 700, fontFamily: 'monospace' }}>
           🍫 {hud.score.toString().padStart(5, '0')}
@@ -207,27 +210,31 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
         )}
       </div>
 
-      {/* Canvas */}
-      <canvas
-        ref={canvasRef}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        style={{
-          touchAction: 'none',
-          userSelect: 'none',
-          borderRadius: 6,
-          border: '2px solid #228B22',
-          maxWidth: '100%',
-        }}
-      />
+      {/* Canvas — flex:1 to fill available space */}
+      <div style={{
+        flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        width: '100%', minHeight: 0,
+      }}>
+        <canvas
+          ref={canvasRef}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          style={{
+            touchAction: 'none',
+            userSelect: 'none',
+            borderRadius: 6,
+            border: '2px solid #228B22',
+            maxWidth: '100%',
+            maxHeight: '100%',
+          }}
+        />
+      </div>
 
       {/* D-pad — compact row layout */}
       <div style={{
         display: 'flex',
-        gap: 8,
+        gap: 6,
         alignItems: 'center',
-        marginTop: 2,
-        paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
         flexShrink: 0,
       }}>
         {(['left', 'up', 'down', 'right'] as Direction[]).map((dir) => (
@@ -235,7 +242,7 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
             key={dir}
             onPointerDown={() => handleDpad(dir)}
             style={{
-              width: 52, height: 52, borderRadius: 14,
+              width: 56, height: 48, borderRadius: 14,
               background: pressedDir === dir
                 ? 'linear-gradient(180deg, #2e7d32, #1b5e20)'
                 : 'linear-gradient(180deg, #1a1a1a, #111)',
