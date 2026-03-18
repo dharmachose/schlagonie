@@ -139,7 +139,7 @@ function drawShlagonie(ctx: CanvasRenderingContext2D, state: GameState, ts: numb
   const { pacman } = state;
   const cx = pacman.pos.x * ts + ts / 2;
   const cy = pacman.pos.y * ts + ts / 2;
-  const emojiSize = ts * 0.8;
+  const emojiSize = ts * 1.1;
 
   ctx.save();
   ctx.translate(cx, cy);
@@ -147,24 +147,29 @@ function drawShlagonie(ctx: CanvasRenderingContext2D, state: GameState, ts: numb
   // Subtle bob
   const bob = Math.sin(state.elapsed * 0.008) * ts * 0.03;
 
+  // Golden glow behind the queen
+  ctx.shadowColor = 'rgba(255, 215, 0, 0.8)';
+  ctx.shadowBlur = ts * 0.5;
+
+  // Pulsing glow
+  const glowPulse = 0.3 + 0.15 * Math.sin(state.elapsed * 0.004);
+  ctx.fillStyle = `rgba(255, 215, 0, ${glowPulse})`;
+  ctx.beginPath();
+  ctx.arc(0, bob, ts * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+
   // Direction flip: face left if going left
   if (pacman.dir === 'left') {
     ctx.scale(-1, 1);
   }
 
-  // Draw queen emoji
+  // Draw queen emoji — large and visible
+  ctx.shadowColor = 'rgba(255, 215, 0, 1)';
+  ctx.shadowBlur = ts * 0.6;
   ctx.font = `${emojiSize}px serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('👑', 0, bob - emojiSize * 0.15);
-
-  // Small running legs effect based on mouth animation
-  const legSpread = pacman.mouthAngle * ts * 0.08;
-  ctx.fillStyle = COLORS.pacman;
-  ctx.beginPath();
-  ctx.arc(-legSpread, emojiSize * 0.25 + bob, ts * 0.06, 0, Math.PI * 2);
-  ctx.arc(legSpread, emojiSize * 0.2 + bob, ts * 0.06, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.fillText('👑', 0, bob);
 
   ctx.restore();
 }
@@ -295,7 +300,7 @@ function drawDeathAnimation(ctx: CanvasRenderingContext2D, state: GameState, ts:
   ctx.scale(shrink, shrink);
   ctx.globalAlpha = shrink;
 
-  ctx.font = `${ts * 0.8}px serif`;
+  ctx.font = `${ts * 1.1}px serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('👑', 0, 0);

@@ -49,8 +49,8 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
       if (!state) return;
       const { cols, rows } = state.mazeDef;
       const rect = container.getBoundingClientRect();
-      // Leave space for HUD (40px) and D-pad (160px)
-      const availH = rect.height - 200;
+      // Leave space for HUD (40px) and D-pad row (70px) + safe area
+      const availH = rect.height - 120;
       const availW = rect.width - 8;
       const byW = Math.floor(availW / cols);
       const byH = Math.floor(availH / rows);
@@ -221,36 +221,29 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
         }}
       />
 
-      {/* D-pad */}
+      {/* D-pad — compact row layout */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(3, 56px)',
-        gridTemplateRows: 'repeat(3, 56px)',
-        gap: 4,
-        marginTop: 4,
+        display: 'flex',
+        gap: 8,
+        alignItems: 'center',
+        marginTop: 2,
+        paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
+        flexShrink: 0,
       }}>
-        {([
-          [null, 'up', null],
-          ['left', null, 'right'],
-          [null, 'down', null],
-        ] as (Direction | null)[][]).flat().map((dir, i) => (
+        {(['left', 'up', 'down', 'right'] as Direction[]).map((dir) => (
           <button
-            key={i}
-            disabled={!dir}
-            onPointerDown={() => dir && handleDpad(dir)}
+            key={dir}
+            onPointerDown={() => handleDpad(dir)}
             style={{
-              width: 56, height: 56, borderRadius: 14,
-              background: dir
-                ? pressedDir === dir
-                  ? 'linear-gradient(180deg, #2e7d32, #1b5e20)'
-                  : 'linear-gradient(180deg, #1a1a1a, #111)'
-                : 'transparent',
-              border: dir ? '2px solid #333' : 'none',
+              width: 52, height: 52, borderRadius: 14,
+              background: pressedDir === dir
+                ? 'linear-gradient(180deg, #2e7d32, #1b5e20)'
+                : 'linear-gradient(180deg, #1a1a1a, #111)',
+              border: '2px solid #333',
               color: '#FFD700',
               fontSize: 22,
-              cursor: dir ? 'pointer' : 'default',
+              cursor: 'pointer',
               WebkitTapHighlightColor: 'transparent',
-              visibility: dir ? 'visible' : 'hidden',
               transition: 'transform 0.1s, background 0.1s',
               transform: pressedDir === dir ? 'scale(0.9)' : 'scale(1)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
