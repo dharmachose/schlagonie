@@ -272,16 +272,22 @@ export default function TowerGame({ level, onLevelComplete, onGameOver }: GamePr
             }}>
               💰 {Math.floor((() => { let t = TOWER_COSTS[selectedTower.type]; for (let l = 2; l <= selectedTower.level; l++) t += UPGRADE_COSTS[selectedTower.type][l]; return t * SELL_REFUND_RATIO; })())}g
             </button>
-            <div style={{ display: 'flex', gap: 2, marginLeft: 'auto' }}>
+            <div style={{ display: 'flex', gap: 2, marginLeft: 'auto', alignItems: 'center' }}>
+              <span style={{ fontSize: 8, color: '#777', marginRight: 2 }}>Cible:</span>
               {TARGETING_MODES.map(mode => {
                 const active = selectedTower.targeting === mode;
                 return (
-                  <button key={mode} onClick={() => scene?.setTargeting(selectedTower, mode)} title={TARGETING_LABELS[mode]} style={{
-                    padding: '3px 5px', borderRadius: 5,
+                  <button key={mode} onClick={() => scene?.setTargeting(selectedTower, mode)} style={{
+                    padding: '2px 4px', borderRadius: 5,
                     background: active ? 'linear-gradient(180deg, #2e7d32, #1b5e20)' : '#1a1a1a',
                     border: active ? '1.5px solid #4caf50' : '1px solid #333',
-                    color: '#fff', fontSize: 12, cursor: 'pointer',
-                  }}>{TARGETING_ICONS[mode]}</button>
+                    color: '#fff', fontSize: 9, cursor: 'pointer',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0,
+                    minWidth: 32,
+                  }}>
+                    <span style={{ fontSize: 11 }}>{TARGETING_ICONS[mode]}</span>
+                    <span style={{ fontSize: 7, color: active ? '#a5d6a7' : '#666' }}>{TARGETING_LABELS[mode]}</span>
+                  </button>
                 );
               })}
             </div>

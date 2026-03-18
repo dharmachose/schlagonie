@@ -144,7 +144,7 @@ export default function HomePage() {
       </div>
 
       <p style={{ color: 'var(--text-muted)', fontSize: '13px', textAlign: 'center', marginTop: '32px', lineHeight: 1.5 }}>
-        🌿 Made with love for Shlagonie, reine d&apos;Aydoilles 👑
+        🌿 Made with love for Shlagonie, reine de La Baffe 👑
       </p>
     </div>
   );
