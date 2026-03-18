@@ -28,8 +28,8 @@ export const GAMES: GameMeta[] = [
   {
     id: 'pacman',
     title: 'Shlagonie Fuit !',
-    emoji: '🏃',
-    description: 'Shlagonie dévale les pentes des Vosges face aux fantômes !',
+    emoji: '👑',
+    description: 'La reine Shlagonie fuit les fruits et légumes dans les ruelles des Vosges !',
     color: '#DC143C',
     available: true,
   },

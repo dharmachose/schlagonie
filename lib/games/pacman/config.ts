@@ -6,15 +6,16 @@ export const COLORS = {
   wallFill: '#1a3a1a',
   wallStroke: '#228B22',
   wallGlow: 'rgba(34, 139, 34, 0.3)',
-  dot: '#FFD700',
+  dot: '#FFD700',        // bières
   dotGlow: 'rgba(255, 215, 0, 0.4)',
-  powerPellet: '#FFD700',
-  pacman: '#FFD700',
+  powerPellet: '#FF8C00', // munster
+  pacman: '#FFD700',      // Shlagonie (reine dorée)
   pacmanStroke: '#CC9900',
-  ghostBlinky: '#DC143C',
-  ghostPinky: '#FFB8FF',
-  ghostInky: '#00FFFF',
-  ghostClyde: '#FFB852',
+  // Légumes/fruits ennemis
+  ghostBlinky: '#DC143C',   // Tomate
+  ghostPinky: '#FF69B4',    // Radis
+  ghostInky: '#228B22',     // Courgette
+  ghostClyde: '#FF8C00',    // Carotte
   ghostFrightened: '#3333DD',
   ghostFrightenedFlash: '#FFFFFF',
   ghostEyes: '#FFFFFF',
@@ -22,6 +23,21 @@ export const COLORS = {
   hudText: '#FFD700',
   readyText: '#FFD700',
   scorePopup: '#00FF00',
+};
+
+// Emojis des ennemis (légumes et fruits)
+export const ENEMY_EMOJIS: Record<string, string> = {
+  blinky: '🍅',  // Tomate — chasse directe
+  pinky: '🥕',   // Carotte — embuscade
+  inky: '🥦',    // Brocoli — flanking
+  clyde: '🍆',   // Aubergine — timide
+};
+
+export const ENEMY_NAMES: Record<string, string> = {
+  blinky: 'Tomate',
+  pinky: 'Carotte',
+  inky: 'Brocoli',
+  clyde: 'Aubergine',
 };
 
 export const GHOST_COLORS: Record<string, string> = {
@@ -32,11 +48,11 @@ export const GHOST_COLORS: Record<string, string> = {
 };
 
 export const LEVEL_CONFIG: Record<DifficultyLevel, LevelConfig> = {
-  1: { pacmanSpeed: 5.0, ghostSpeed: 3.5, frightenedDuration: 10000, ghostCount: 2, fruitPoints: 100, fruitEmoji: '🍒' },
-  2: { pacmanSpeed: 5.5, ghostSpeed: 4.5, frightenedDuration: 8000, ghostCount: 3, fruitPoints: 200, fruitEmoji: '🍓' },
-  3: { pacmanSpeed: 6.0, ghostSpeed: 5.5, frightenedDuration: 6000, ghostCount: 4, fruitPoints: 300, fruitEmoji: '🍊' },
-  4: { pacmanSpeed: 6.5, ghostSpeed: 6.5, frightenedDuration: 4000, ghostCount: 4, fruitPoints: 400, fruitEmoji: '🍎' },
-  5: { pacmanSpeed: 7.0, ghostSpeed: 7.5, frightenedDuration: 3000, ghostCount: 4, fruitPoints: 500, fruitEmoji: '🔑' },
+  1: { pacmanSpeed: 5.0, ghostSpeed: 3.5, frightenedDuration: 10000, ghostCount: 2, fruitPoints: 100, fruitEmoji: '🧀' },
+  2: { pacmanSpeed: 5.5, ghostSpeed: 4.5, frightenedDuration: 8000, ghostCount: 3, fruitPoints: 200, fruitEmoji: '🥨' },
+  3: { pacmanSpeed: 6.0, ghostSpeed: 5.5, frightenedDuration: 6000, ghostCount: 4, fruitPoints: 300, fruitEmoji: '🍺' },
+  4: { pacmanSpeed: 6.5, ghostSpeed: 6.5, frightenedDuration: 4000, ghostCount: 4, fruitPoints: 400, fruitEmoji: '🥩' },
+  5: { pacmanSpeed: 7.0, ghostSpeed: 7.5, frightenedDuration: 3000, ghostCount: 4, fruitPoints: 500, fruitEmoji: '🍖' },
 };
 
 export const SCATTER_CHASE_SEQUENCE = [

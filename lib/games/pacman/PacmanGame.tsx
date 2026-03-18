@@ -171,7 +171,7 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
   }, []);
 
   const livesDisplay = [];
-  for (let i = 0; i < hud.lives; i++) livesDisplay.push('🟡');
+  for (let i = 0; i < hud.lives; i++) livesDisplay.push('👑');
 
   return (
     <div
@@ -190,19 +190,19 @@ export default function PacmanGame({ level, onLevelComplete, onGameOver }: GameP
         minHeight: 32,
       }}>
         <span style={{ color: '#FFD700', fontWeight: 700, fontFamily: 'monospace' }}>
-          {hud.score.toString().padStart(5, '0')}
+          🍺 {hud.score.toString().padStart(5, '0')}
         </span>
-        <span style={{ color: '#999', letterSpacing: 2 }}>{livesDisplay.join('')}</span>
+        <span style={{ letterSpacing: 2 }}>{livesDisplay.join('')}</span>
         <span style={{ color: '#666', fontSize: 11 }}>
-          {hud.dotsLeft > 0 ? `${hud.dotsLeft} restants` : 'Terminé !'}
+          {hud.dotsLeft > 0 ? `${hud.dotsLeft} 🍺` : 'Bravo !'}
         </span>
         {hud.scared && (
           <span style={{
-            color: '#87CEEB',
-            animation: hud.scaredTimer < 2000 ? 'none' : undefined,
+            color: '#FF8C00',
             fontWeight: 700,
+            fontSize: 12,
           }}>
-            PEUR !
+            🧀 MUNSTER !
           </span>
         )}
       </div>
