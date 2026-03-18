@@ -10,6 +10,150 @@ import type { GameProps } from '@/lib/types';
 
 const WIN_SCORE: Record<number, number> = { 1: 500, 2: 800, 3: 1200, 4: 1800, 5: 2500 };
 
+// ── Wood palettes — each piece is a different wood species ─────────────────
+const WOOD_PALETTES: Record<TetrominoType, {
+  light: [number, number, number];
+  dark:  [number, number, number];
+  ringFreq: number;   // higher = tighter rings / grain
+  isRadial: boolean;  // true = cross-section rings (O piece)
+}> = {
+  I: { light: [222, 184, 135], dark: [130,  82,  40], ringFreq: 0.45, isRadial: false }, // Pin des Vosges
+  O: { light: [160, 110,  68], dark: [ 72,  42,  18], ringFreq: 0.65, isRadial: true  }, // Chêne — cernes
+  T: { light: [122,  68,  28], dark: [ 48,  22,   8], ringFreq: 0.55, isRadial: false }, // Noyer
+  S: { light: [245, 235, 210], dark: [150, 118,  80], ringFreq: 0.30, isRadial: false }, // Bouleau
+  Z: { light: [175,  72,  72], dark: [ 82,  24,  24], ringFreq: 0.50, isRadial: false }, // Cerisier
+  J: { light: [235, 200, 150], dark: [155, 108,  58], ringFreq: 0.38, isRadial: false }, // Érable
+  L: { light: [190, 130,  65], dark: [ 95,  58,  18], ringFreq: 0.52, isRadial: false }, // Mélèze
+};
+
+/** Generate a realistic wood texture at the given pixel size using ImageData. */
+function createWoodTexture(size: number, type: TetrominoType): HTMLCanvasElement {
+  const pal = WOOD_PALETTES[type];
+  const canvas = document.createElement('canvas');
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext('2d')!;
+  const img = ctx.createImageData(size, size);
+  const d   = img.data;
+  const cx  = size / 2;
+  const cy  = size / 2;
+
+  for (let py = 0; py < size; py++) {
+    for (let px = 0; px < size; px++) {
+      let t: number;
+      if (pal.isRadial) {
+        // Oak cross-section: concentric rings from centre
+        const dist = Math.sqrt((px - cx) ** 2 + (py - cy) ** 2);
+        const f1 = Math.sin(dist * pal.ringFreq);
+        const f2 = Math.sin(dist * pal.ringFreq * 1.7 + 0.8) * 0.28;
+        t = (f1 + f2) * 0.5 + 0.5;
+      } else {
+        // Long grain: primary wave + secondary harmonic + slight x warp
+        const wave = py * pal.ringFreq + px * 0.04 + Math.sin(py * 0.18 + px * 0.03) * 2.8;
+        const f1   = Math.sin(wave);
+        const f2   = Math.sin(wave * 2.1 + 0.4) * 0.22;
+        t = (f1 + f2) * 0.5 + 0.5;
+      }
+      t = Math.max(0, Math.min(1, t));
+      const i  = (py * size + px) * 4;
+      d[i]     = Math.round(pal.dark[0] + (pal.light[0] - pal.dark[0]) * t);
+      d[i + 1] = Math.round(pal.dark[1] + (pal.light[1] - pal.dark[1]) * t);
+      d[i + 2] = Math.round(pal.dark[2] + (pal.light[2] - pal.dark[2]) * t);
+      d[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+
+  // Bevel: top-left light highlight, bottom-right shadow
+  const bevel = ctx.createLinearGradient(0, 0, size, size);
+  bevel.addColorStop(0,   'rgba(255,255,255,0.32)');
+  bevel.addColorStop(0.4, 'rgba(255,255,255,0.04)');
+  bevel.addColorStop(0.6, 'rgba(0,0,0,0.04)');
+  bevel.addColorStop(1,   'rgba(0,0,0,0.44)');
+  ctx.fillStyle = bevel;
+  ctx.fillRect(0, 0, size, size);
+
+  return canvas;
+}
+
+type WoodTextureMap = Record<TetrominoType, HTMLCanvasElement>;
+
+function generateWoodTextures(size: number): WoodTextureMap {
+  return Object.fromEntries(
+    (['I','O','T','S','Z','J','L'] as TetrominoType[]).map((t) => [t, createWoodTexture(size, t)])
+  ) as WoodTextureMap;
+}
+
+// ── Canvas draw helpers ────────────────────────────────────────────────────
+type DisplayCell = { type: TetrominoType; ghost: boolean } | null;
+const GAP = 1;
+
+function drawBoardCanvas(
+  canvas: HTMLCanvasElement,
+  board: DisplayCell[][],
+  cellSize: number,
+  textures: WoodTextureMap,
+) {
+  const W = BOARD_COLS * cellSize + (BOARD_COLS - 1) * GAP;
+  const H = BOARD_ROWS * cellSize + (BOARD_ROWS - 1) * GAP;
+  if (canvas.width !== W || canvas.height !== H) {
+    canvas.width  = W;
+    canvas.height = H;
+  }
+  const ctx = canvas.getContext('2d')!;
+  ctx.fillStyle = '#030b03';
+  ctx.fillRect(0, 0, W, H);
+
+  board.forEach((row, ri) => {
+    row.forEach((cell, ci) => {
+      const x = ci * (cellSize + GAP);
+      const y = ri * (cellSize + GAP);
+
+      if (!cell) {
+        ctx.fillStyle = '#050e05';
+        ctx.fillRect(x, y, cellSize, cellSize);
+      } else if (cell.ghost) {
+        ctx.fillStyle = '#050e05';
+        ctx.fillRect(x, y, cellSize, cellSize);
+        const pal = WOOD_PALETTES[cell.type];
+        const [r, g, b] = pal.dark;
+        ctx.strokeStyle = `rgba(${r + 50},${g + 25},${b + 12},0.6)`;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 2]);
+        ctx.strokeRect(x + 0.5, y + 0.5, cellSize - 1, cellSize - 1);
+        ctx.setLineDash([]);
+      } else {
+        ctx.drawImage(textures[cell.type], x, y, cellSize, cellSize);
+      }
+    });
+  });
+}
+
+function drawNextCanvas(
+  canvas: HTMLCanvasElement,
+  nextGrid: (TetrominoType | null)[][],
+  cellSize: number,
+  textures: WoodTextureMap,
+) {
+  const S = 4 * cellSize + 3 * GAP;
+  if (canvas.width !== S || canvas.height !== S) {
+    canvas.width  = S;
+    canvas.height = S;
+  }
+  const ctx = canvas.getContext('2d')!;
+  ctx.clearRect(0, 0, S, S);
+  nextGrid.forEach((row, ri) => {
+    row.forEach((type, ci) => {
+      const x = ci * (cellSize + GAP);
+      const y = ri * (cellSize + GAP);
+      if (type) {
+        ctx.drawImage(textures[type], x, y, cellSize, cellSize);
+      }
+    });
+  });
+}
+
+// ── Component ──────────────────────────────────────────────────────────────
 export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameProps) {
   const [board, setBoard] = useState<Board>(emptyBoard());
   const [current, setCurrent] = useState<Tetromino>(() => randomPiece());
@@ -19,30 +163,30 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
   const [cellSize, setCellSize] = useState(24);
   const startRef = useRef(Date.now());
   const boardContainerRef = useRef<HTMLDivElement>(null);
+  const canvasRef     = useRef<HTMLCanvasElement>(null);
+  const nextCanvasRef = useRef<HTMLCanvasElement>(null);
+  const texturesRef   = useRef<WoodTextureMap | null>(null);
+  const textureSizeRef = useRef<number>(0);
 
-  const dropRef = useRef<NodeJS.Timeout | null>(null);
-  const boardRef = useRef(board);
-  const currentRef = useRef(current);
-  const scoreRef = useRef(score);
-  boardRef.current = board;
+  const dropRef     = useRef<NodeJS.Timeout | null>(null);
+  const boardRef    = useRef(board);
+  const currentRef  = useRef(current);
+  const scoreRef    = useRef(score);
+  boardRef.current   = board;
   currentRef.current = current;
-  scoreRef.current = score;
+  scoreRef.current   = score;
 
-  // Guard against double-lock (hard drop timer + setTimeout race condition)
   const isLockingRef = useRef(false);
-  // Always points to latest lock (avoids stale closure in setTimeout calls)
-  const lockFnRef = useRef<() => void>(() => {});
-
-  // Reset guard after each successful lock (board changed = lock completed)
+  const lockFnRef    = useRef<() => void>(() => {});
   useEffect(() => { isLockingRef.current = false; }, [board]);
 
-  // ResizeObserver: compute cell size from actual available container
+  // ResizeObserver
   useEffect(() => {
     const el = boardContainerRef.current;
     if (!el) return;
     const ro = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
-      const byW = Math.floor((width - 4) / BOARD_COLS);
+      const byW = Math.floor((width  - 4) / BOARD_COLS);
       const byH = Math.floor((height - 4) / BOARD_ROWS);
       setCellSize(Math.max(Math.min(byW, byH, 32), 18));
     });
@@ -51,10 +195,8 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
   }, []);
 
   const lock = useCallback(() => {
-    // Prevent double-lock: drop timer + hard-drop setTimeout can both fire
     if (isLockingRef.current) return;
     isLockingRef.current = true;
-
     const piece = currentRef.current;
     const b = boardRef.current;
     const newBoard = placePiece(b, piece);
@@ -63,7 +205,6 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
     setBoard(cleared);
     setScore(newScore);
     scoreRef.current = newScore;
-
     const np = next;
     if (!isValid(cleared, np.cells, np.row, np.col)) {
       setGameOver(true);
@@ -78,10 +219,8 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
     setNext(randomPiece());
   }, [next, level, onGameOver, onLevelComplete]);
 
-  // Keep lockFnRef in sync with latest lock (for setTimeout calls)
   lockFnRef.current = lock;
 
-  // Drop timer
   useEffect(() => {
     if (gameOver) return;
     dropRef.current = setInterval(() => {
@@ -97,7 +236,6 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
     return () => { if (dropRef.current) clearInterval(dropRef.current); };
   }, [level, gameOver, lock]);
 
-  // Keyboard controls
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (gameOver) return;
@@ -127,7 +265,6 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
     return () => window.removeEventListener('keydown', handler);
   }, [gameOver, lock]);
 
-  // Touch controls
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -141,8 +278,7 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
     const b = boardRef.current;
     if (Math.abs(dx) > Math.abs(dy)) {
       if (Math.abs(dx) > 20) {
-        const dir = dx > 0 ? 1 : -1;
-        const m = { ...piece, col: piece.col + dir };
+        const m = { ...piece, col: piece.col + (dx > 0 ? 1 : -1) };
         if (isValid(b, piece.cells, m.row, m.col)) setCurrent(m);
       }
     } else {
@@ -166,26 +302,23 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
   })();
 
   // Build display board
-  type DisplayCell = { type: TetrominoType; ghost: boolean } | null;
   const displayBoard: DisplayCell[][] = board.map((row) =>
     row.map((c) => (c ? { type: c, ghost: false } : null))
   );
   current.cells.forEach(([dr, dc]) => {
     const nr = ghostRow + dr;
     const nc = current.col + dc;
-    if (nr >= 0 && nr < BOARD_ROWS && nc >= 0 && nc < BOARD_COLS && !displayBoard[nr][nc]) {
+    if (nr >= 0 && nr < BOARD_ROWS && nc >= 0 && nc < BOARD_COLS && !displayBoard[nr][nc])
       displayBoard[nr][nc] = { type: current.type, ghost: true };
-    }
   });
   current.cells.forEach(([dr, dc]) => {
     const nr = current.row + dr;
     const nc = current.col + dc;
-    if (nr >= 0 && nr < BOARD_ROWS && nc >= 0 && nc < BOARD_COLS) {
+    if (nr >= 0 && nr < BOARD_ROWS && nc >= 0 && nc < BOARD_COLS)
       displayBoard[nr][nc] = { type: current.type, ghost: false };
-    }
   });
 
-  // Next piece preview (4×4 grid)
+  // Next piece preview grid (4×4)
   const nextGrid: (TetrominoType | null)[][] = Array.from({ length: 4 }, () => Array(4).fill(null));
   next.cells.forEach(([dr, dc]) => {
     const r = dr + 1;
@@ -193,9 +326,23 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
     if (r >= 0 && r < 4 && c >= 0 && c < 4) nextGrid[r][c] = next.type;
   });
 
+  // ── Canvas render (runs after every React render) ─────────────────────────
+  useEffect(() => {
+    if (!canvasRef.current) return;
+    // Regenerate textures only when cellSize changes
+    if (textureSizeRef.current !== cellSize) {
+      texturesRef.current  = generateWoodTextures(cellSize);
+      textureSizeRef.current = cellSize;
+    }
+    if (!texturesRef.current) return;
+    drawBoardCanvas(canvasRef.current, displayBoard, cellSize, texturesRef.current);
+    if (nextCanvasRef.current) {
+      drawNextCanvas(nextCanvasRef.current, nextGrid, 12, texturesRef.current);
+    }
+  });
+
   const winScore = WIN_SCORE[level];
   const progress = Math.min((score / winScore) * 100, 100);
-
   const btnStyle: React.CSSProperties = {
     background: 'rgba(255,255,255,0.06)',
     border: '1px solid rgba(255,255,255,0.12)',
@@ -238,14 +385,14 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
             <div style={{
               height: '100%',
               width: `${progress}%`,
-              background: 'linear-gradient(90deg, #00C851, #FFD700)',
+              background: 'linear-gradient(90deg, #8B5E3C, #DEB887)',
               borderRadius: '99px',
               transition: 'width 0.3s ease',
             }} />
           </div>
         </div>
 
-        {/* Next piece */}
+        {/* Next piece — canvas */}
         <div style={{
           background: 'rgba(255,255,255,0.04)',
           border: '1px solid rgba(255,255,255,0.1)',
@@ -258,27 +405,10 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
           minWidth: '66px',
         }}>
           <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '9px', textTransform: 'uppercase', letterSpacing: '1px' }}>Next</div>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(4, 11px)',
-            gridTemplateRows: 'repeat(4, 11px)',
-            gap: '1px',
-          }}>
-            {nextGrid.flat().map((c, i) => {
-              const p = c ? PIECES[c] : null;
-              return (
-                <div key={i} style={{
-                  width: 11,
-                  height: 11,
-                  borderRadius: '2px',
-                  background: p ? p.wood.bg : 'rgba(255,255,255,0.03)',
-                  boxShadow: p
-                    ? `inset 1px 1px 0 rgba(255,255,255,0.3), inset -1px -1px 0 rgba(0,0,0,0.45)`
-                    : 'none',
-                }} />
-              );
-            })}
-          </div>
+          <canvas
+            ref={nextCanvasRef}
+            style={{ imageRendering: 'pixelated', borderRadius: '2px' }}
+          />
         </div>
       </div>
 
@@ -294,56 +424,18 @@ export default function TetrisGame({ level, onLevelComplete, onGameOver }: GameP
           overflow: 'hidden',
         }}
       >
-        <div
+        <canvas
+          ref={canvasRef}
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
           style={{
-            display: 'grid',
-            gridTemplateColumns: `repeat(${BOARD_COLS}, ${cellSize}px)`,
-            gridTemplateRows: `repeat(${BOARD_ROWS}, ${cellSize}px)`,
-            gap: '1px',
-            background: 'rgba(255,255,255,0.05)',
-            border: '2px solid rgba(255,255,255,0.08)',
             borderRadius: '8px',
-            overflow: 'hidden',
+            border: '2px solid rgba(255,255,255,0.08)',
             touchAction: 'none',
             userSelect: 'none',
+            display: 'block',
           }}
-        >
-          {displayBoard.flat().map((cell, i) => {
-            if (!cell) {
-              return (
-                <div key={i} style={{
-                  width: cellSize,
-                  height: cellSize,
-                  background: '#050e05',
-                }} />
-              );
-            }
-            const p = PIECES[cell.type];
-            if (cell.ghost) {
-              return (
-                <div key={i} style={{
-                  width: cellSize,
-                  height: cellSize,
-                  background: 'transparent',
-                  border: `1px dashed ${p.wood.border}70`,
-                  borderRadius: '2px',
-                  boxSizing: 'border-box',
-                }} />
-              );
-            }
-            return (
-              <div key={i} style={{
-                width: cellSize,
-                height: cellSize,
-                background: p.wood.bg,
-                borderRadius: '2px',
-                boxShadow: `inset 2px 2px 0 rgba(255,255,255,0.28), inset -2px -2px 0 rgba(0,0,0,0.45), inset 0 0 5px rgba(0,0,0,0.15)`,
-              }} />
-            );
-          })}
-        </div>
+        />
       </div>
 
       {/* Controls */}
