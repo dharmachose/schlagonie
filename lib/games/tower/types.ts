@@ -31,6 +31,7 @@ export interface Enemy {
 
 // ─── Tower ───────────────────────────────────────────────────────────────────
 export type TowerType = 'canon' | 'baffe' | 'piege' | 'mortier' | 'glace';
+export type TargetingMode = 'farthest' | 'closest' | 'strongest' | 'weakest';
 
 export interface Tower {
   id: string;
@@ -46,6 +47,8 @@ export interface Tower {
   slow: number;           // slow multiplier applied to target
   freezeDuration: number; // ms to freeze target
   color: string;
+  level: number;          // 1-3 upgrade level
+  targeting: TargetingMode;
 }
 
 // ─── Projectile ──────────────────────────────────────────────────────────────
@@ -70,6 +73,8 @@ export interface Particle {
   createdAt: number;
   duration: number;       // ms
   scale: number;
+  vx?: number;            // velocity x for animated particles
+  vy?: number;            // velocity y
 }
 
 // ─── Game phase ──────────────────────────────────────────────────────────────
@@ -87,6 +92,7 @@ export interface GameState {
   particles: Particle[];
   placementTimer: number; // ms remaining in placement phase
   spawnedCount: number;   // enemies spawned this wave
+  speedMultiplier: number; // 0=paused, 1=normal, 2=fast, 3=ultra
 }
 
 // ─── Wave / Level config ──────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-import type { GameState, Enemy, Tower, Projectile, Particle, Tile, Pos } from './types';
+import type { GameState, Enemy, Tower, Projectile, Particle, Tile, Pos, TargetingMode } from './types';
 import type { LevelConfig, WaveConfig } from './types';
 import { ENEMY_DEFS, ENEMY_LIVES_DAMAGE, TILE_SIZE } from './config';
 
@@ -11,14 +11,14 @@ export function tileCenter(col: number, row: number): Pos {
 }
 
 // ─── Distance between two positions ──────────────────────────────────────────
-function dist(a: Pos, b: Pos): number {
+export function dist(a: Pos, b: Pos): number {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 }
 
 // ─── Spawn one enemy at start of path ────────────────────────────────────────
 export function spawnEnemy(
   type: Enemy['type'],
-  pathIndex: number, // which path (for multi-path levels)
+  pathIndex: number,
   paths: Tile[][],
   spawnDelay: number
 ): Enemy {
@@ -56,7 +56,6 @@ export function buildSpawnQueue(wave: WaveConfig, paths: Tile[][]): Enemy[] {
     }
   }
 
-  // Sort by spawnDelay so we process them in order
   return enemies.sort((a, b) => a.spawnDelay - b.spawnDelay);
 }
 
@@ -92,7 +91,6 @@ function moveEnemy(enemy: Enemy, paths: Tile[][], dtMs: number): { reached: bool
     }
   }
 
-  // Update pixel position
   const wpIdx = Math.min(Math.floor(enemy.pathProgress), path.length - 2);
   const frac = enemy.pathProgress - wpIdx;
   const a = tileCenter(path[wpIdx].col, path[wpIdx].row);
@@ -105,21 +103,37 @@ function moveEnemy(enemy: Enemy, paths: Tile[][], dtMs: number): { reached: bool
   return { reached: false };
 }
 
-// ─── Find best target for a tower (enemy farthest along path, in range) ───────
-function findTarget(tower: Tower, enemies: Enemy[]): Enemy | null {
+// ─── Find best target for a tower based on targeting mode ────────────────────
+export function findTarget(tower: Tower, enemies: Enemy[]): Enemy | null {
   const towerPos: Pos = tileCenter(tower.col, tower.row);
-  let best: Enemy | null = null;
-  let bestProgress = -1;
+  const inRange: Enemy[] = [];
 
   for (const e of enemies) {
     if (!e.alive || !e.spawned || e.reached) continue;
     const d = dist(towerPos, e.pos);
-    if (d <= tower.range && e.pathProgress > bestProgress) {
-      best = e;
-      bestProgress = e.pathProgress;
-    }
+    if (d <= tower.range) inRange.push(e);
   }
-  return best;
+
+  if (inRange.length === 0) return null;
+
+  const mode: TargetingMode = tower.targeting || 'farthest';
+
+  switch (mode) {
+    case 'farthest':
+      return inRange.reduce((best, e) => e.pathProgress > best.pathProgress ? e : best);
+    case 'closest':
+      return inRange.reduce((best, e) => {
+        const dBest = dist(towerPos, best.pos);
+        const dE = dist(towerPos, e.pos);
+        return dE < dBest ? e : best;
+      });
+    case 'strongest':
+      return inRange.reduce((best, e) => e.hp > best.hp ? e : best);
+    case 'weakest':
+      return inRange.reduce((best, e) => e.hp < best.hp ? e : best);
+    default:
+      return inRange.reduce((best, e) => e.pathProgress > best.pathProgress ? e : best);
+  }
 }
 
 // ─── Fire a projectile ────────────────────────────────────────────────────────
@@ -148,7 +162,6 @@ function applyAoe(pos: Pos, radius: number, damage: number, enemies: Enemy[], pa
       if (e.hp <= 0) { e.alive = false; spawnDeathParticle(e, particles); }
     }
   }
-  // explosion particle
   particles.push({ id: uid(), pos: { ...pos }, emoji: '💥', createdAt: Date.now(), duration: 500, scale: 1.5 });
 }
 
@@ -177,6 +190,8 @@ export interface UpdateResult {
   livesLost: number;
   goldEarned: number;
   waveComplete: boolean;
+  kills: Array<{ enemy: Enemy; pos: Pos }>;
+  hits: Array<{ pos: Pos; aoe: boolean }>;
 }
 
 export function updateBattle(
@@ -188,6 +203,8 @@ export function updateBattle(
 ): UpdateResult {
   let livesLost = 0;
   let goldEarned = 0;
+  const kills: Array<{ enemy: Enemy; pos: Pos }> = [];
+  const hits: Array<{ pos: Pos; aoe: boolean }> = [];
 
   // ── Spawn enemies ──
   for (const e of state.enemies) {
@@ -244,14 +261,15 @@ export function updateBattle(
     const step = proj.speed * dtMs / 1000;
 
     if (d <= step) {
-      // Hit!
       proj.dead = true;
       toRemove.push(proj.id);
 
       if (proj.aoe > 0) {
         applyAoe(target.pos, proj.aoe, proj.damage, state.enemies, state.particles);
+        hits.push({ pos: { ...target.pos }, aoe: true });
       } else {
         target.hp -= proj.damage;
+        hits.push({ pos: { ...target.pos }, aoe: false });
         if (proj.freezeDuration > 0) {
           target.frozen = true;
           target.frozenTimer = proj.freezeDuration;
@@ -263,11 +281,11 @@ export function updateBattle(
         if (target.hp <= 0) {
           target.alive = false;
           goldEarned += target.reward;
+          kills.push({ enemy: target, pos: { ...target.pos } });
           spawnDeathParticle(target, state.particles);
         }
       }
     } else {
-      // Move toward target
       const angle = Math.atan2(target.pos.y - proj.pos.y, target.pos.x - proj.pos.x);
       proj.pos = {
         x: proj.pos.x + Math.cos(angle) * step,
@@ -286,5 +304,5 @@ export function updateBattle(
   const allDone = state.enemies.every(e => !e.alive || e.reached);
   const waveComplete = allSpawned && allDone;
 
-  return { livesLost, goldEarned, waveComplete };
+  return { livesLost, goldEarned, waveComplete, kills, hits };
 }
