@@ -32,6 +32,8 @@ export default function AlloGame({ level, onLevelComplete, onGameOver }: GamePro
   const [feedbackMsg, setFeedbackMsg] = useState('');
   const [earnedPts, setEarnedPts] = useState(0);
   const [isAnswerCorrect, setIsAnswerCorrect] = useState(false);
+  const [canContinue, setCanContinue] = useState(false);
+  const [pendingLives, setPendingLives] = useState(3);
 
   const startRef = useRef(Date.now());
   const livesRef = useRef(3);
@@ -71,9 +73,11 @@ export default function AlloGame({ level, onLevelComplete, onGameOver }: GamePro
     setCombo(newCombo);
     setScore(scoreRef.current);
     setLives(newLives);
+    setPendingLives(newLives);
     setSelected(answer === '__timeout__' ? null : answer);
     setEarnedPts(pts);
     setIsAnswerCorrect(correct);
+    setCanContinue(false);
     setFeedbackMsg(
       correct
         ? currentQ.explanation
@@ -82,28 +86,37 @@ export default function AlloGame({ level, onLevelComplete, onGameOver }: GamePro
           : `Bonne réponse : "${currentQ.correct}". ${currentQ.explanation}`
     );
 
-    setTimeout(() => {
-      if (newLives <= 0) { onGameOver(); return; }
-      const nextQi = qi + 1;
-      if (nextQi >= questions.length) {
-        if (scoreRef.current >= WIN_SCORE[level]) {
-          onLevelComplete(Date.now() - startRef.current);
-        } else {
-          onGameOver();
-        }
-        return;
-      }
-      setQi(nextQi);
-      setSelected(null);
-      const newTime = QUESTION_TIME[level];
-      setTimeLeft(newTime);
-      timeLeftRef.current = newTime;
-      timeoutFiredRef.current = false;
-      setPhase('reading');
-      phaseRef.current = 'reading';
-    }, 2800);
+    // Si plus de vies, game over automatique après un court délai
+    if (newLives <= 0) {
+      setTimeout(() => onGameOver(), 1800);
+      return;
+    }
+
+    // Bouton "Continuer" disponible après 600ms (laisse le temps de voir le feedback)
+    setTimeout(() => setCanContinue(true), 600);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qi, questions, level, maxTime, onLevelComplete, onGameOver, clearTimer]);
+
+  const advanceToNext = useCallback(() => {
+    const nextQi = qi + 1;
+    if (nextQi >= questions.length) {
+      if (scoreRef.current >= WIN_SCORE[level]) {
+        onLevelComplete(Date.now() - startRef.current);
+      } else {
+        onGameOver();
+      }
+      return;
+    }
+    setQi(nextQi);
+    setSelected(null);
+    setCanContinue(false);
+    const newTime = QUESTION_TIME[level];
+    setTimeLeft(newTime);
+    timeLeftRef.current = newTime;
+    timeoutFiredRef.current = false;
+    setPhase('reading');
+    phaseRef.current = 'reading';
+  }, [qi, questions.length, level, onLevelComplete, onGameOver]);
 
   // Reading → answering after 2s (temps de lire le message client)
   useEffect(() => {
@@ -535,7 +548,7 @@ export default function AlloGame({ level, onLevelComplete, onGameOver }: GamePro
             background: isAnswerCorrect ? 'rgba(50,205,50,0.07)' : 'rgba(220,20,60,0.07)',
             border: `1px solid ${isAnswerCorrect ? 'rgba(50,205,50,0.2)' : 'rgba(220,20,60,0.2)'}`,
             borderRadius: '10px',
-            padding: '10px 13px',
+            padding: '12px 13px',
             fontSize: '12px',
             color: 'rgba(255,255,255,0.7)',
             lineHeight: 1.65,
@@ -552,6 +565,55 @@ export default function AlloGame({ level, onLevelComplete, onGameOver }: GamePro
           </div>
         )}
       </div>
+
+      {/* ══════════════════════════════════════════════
+          BOUTON CONTINUER (feedback)
+      ══════════════════════════════════════════════ */}
+      {phase === 'feedback' && pendingLives > 0 && (
+        <div style={{
+          padding: '10px 12px 16px',
+          flexShrink: 0,
+          background: 'rgba(0,0,0,0.15)',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+        }}>
+          <button
+            onClick={advanceToNext}
+            disabled={!canContinue}
+            style={{
+              width: '100%',
+              minHeight: '52px',
+              background: canContinue
+                ? isAnswerCorrect
+                  ? 'linear-gradient(135deg, rgba(50,205,50,0.2), rgba(34,139,34,0.15))'
+                  : 'linear-gradient(135deg, rgba(74,144,217,0.2), rgba(42,95,189,0.15))'
+                : 'rgba(255,255,255,0.03)',
+              border: `1.5px solid ${canContinue
+                ? isAnswerCorrect ? 'rgba(50,205,50,0.4)' : 'rgba(74,144,217,0.4)'
+                : 'rgba(255,255,255,0.08)'}`,
+              borderRadius: '12px',
+              color: canContinue ? '#e8ecf0' : 'rgba(255,255,255,0.2)',
+              fontSize: '15px',
+              fontWeight: 700,
+              cursor: canContinue ? 'pointer' : 'default',
+              WebkitTapHighlightColor: 'transparent',
+              transition: 'all 0.4s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              letterSpacing: '0.3px',
+            }}
+          >
+            {canContinue ? (
+              <>
+                {qi + 1 >= questions.length ? '🏁 Voir les résultats' : 'Ticket suivant →'}
+              </>
+            ) : (
+              <span style={{ fontSize: '13px', opacity: 0.5 }}>•••</span>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* ══════════════════════════════════════════════
           ZONE DE RÉPONSE (boutons)
