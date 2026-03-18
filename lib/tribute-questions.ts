@@ -56,7 +56,7 @@ const TRIBUTE_QUESTIONS: TributeQuestion[] = [
   { id: 'q-allo-2', gameId: 'allo', level: 2, text: 'Un truc que Léonie dit tout le temps 🔁', placeholder: 'Elle dit souvent...' },
   { id: 'q-allo-3', gameId: 'allo', level: 3, text: 'Ce que Léonie ne supporte absolument pas 😤', placeholder: 'Elle ne supporte pas...' },
   { id: 'q-allo-4', gameId: 'allo', level: 4, text: 'Un rêve que tu souhaites pour Léonie 🌈', placeholder: 'Je lui souhaite...' },
-  { id: 'q-allo-5', gameId: 'allo', level: 5, text: 'Ton message pour les 25 ans de Léonie 🎂🎊', placeholder: 'Pour tes 25 ans...' },
+  { id: 'q-allo-5', gameId: 'allo', level: 5, text: 'Ton message pour les 18 ans de Léonie 🎂🎊', placeholder: 'Pour tes 18 ans...' },
 ];
 
 export function getTributeQuestion(gameId: GameId, level: DifficultyLevel): TributeQuestion | null {
