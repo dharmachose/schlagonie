@@ -336,7 +336,51 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
             alignItems: 'center', justifyContent: 'center',
             gap: '20px', padding: '32px',
           }} className="animate-bounce-in">
-            <div style={{ fontSize: '80px', lineHeight: 1 }}>💀</div>
+            {/* Schlagonie mascot: leaf + face + crown */}
+            <svg width="110" height="120" viewBox="0 0 110 120" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+              {/* ── 7-finger cannabis leaf ── */}
+              {/* centre stem */}
+              <line x1="55" y1="100" x2="55" y2="40" stroke="#228B22" strokeWidth="3" strokeLinecap="round"/>
+              {/* centre top finger */}
+              <ellipse cx="55" cy="28" rx="7" ry="16" fill="#32CD32" transform="rotate(0 55 44)"/>
+              {/* left fingers */}
+              <ellipse cx="55" cy="28" rx="6" ry="14" fill="#2db82d" transform="rotate(-28 55 60)"/>
+              <ellipse cx="55" cy="28" rx="5" ry="12" fill="#228B22" transform="rotate(-56 55 68)"/>
+              <ellipse cx="55" cy="28" rx="4" ry="10" fill="#1a6e1a" transform="rotate(-80 55 74)"/>
+              {/* right fingers */}
+              <ellipse cx="55" cy="28" rx="6" ry="14" fill="#2db82d" transform="rotate(28 55 60)"/>
+              <ellipse cx="55" cy="28" rx="5" ry="12" fill="#228B22" transform="rotate(56 55 68)"/>
+              <ellipse cx="55" cy="28" rx="4" ry="10" fill="#1a6e1a" transform="rotate(80 55 74)"/>
+              {/* ── Face circle ── */}
+              <circle cx="55" cy="62" r="20" fill="#F5CBA7" stroke="#c4956a" strokeWidth="1.5"/>
+              {/* eyes */}
+              <circle cx="48" cy="58" r="3.5" fill="#2c1a0a"/>
+              <circle cx="62" cy="58" r="3.5" fill="#2c1a0a"/>
+              {/* eye glints */}
+              <circle cx="49.5" cy="56.5" r="1.2" fill="white"/>
+              <circle cx="63.5" cy="56.5" r="1.2" fill="white"/>
+              {/* smile */}
+              <path d="M47 67 Q55 74 63 67" stroke="#a0522d" strokeWidth="2" strokeLinecap="round" fill="none"/>
+              {/* rosy cheeks */}
+              <ellipse cx="43" cy="65" rx="5" ry="3" fill="rgba(220,80,60,0.25)"/>
+              <ellipse cx="67" cy="65" rx="5" ry="3" fill="rgba(220,80,60,0.25)"/>
+              {/* ── Crown ── */}
+              {/* crown base band */}
+              <rect x="36" y="40" width="38" height="10" rx="3" fill="#FFD700"/>
+              {/* crown points */}
+              <polygon points="36,40 42,26 48,40" fill="#FFD700"/>
+              <polygon points="49,40 55,22 61,40" fill="#FFD700"/>
+              <polygon points="62,40 68,26 74,40" fill="#FFD700"/>
+              {/* crown outline */}
+              <polyline points="36,40 36,50 74,50 74,40 68,26 61,40 55,22 49,40 42,26 36,40" fill="none" stroke="#FFA500" strokeWidth="1.2" strokeLinejoin="round"/>
+              {/* rubies: 3 */}
+              <circle cx="45" cy="45" r="3.5" fill="#DC143C"/>
+              <circle cx="55" cy="45" r="3.5" fill="#DC143C"/>
+              <circle cx="65" cy="45" r="3.5" fill="#DC143C"/>
+              {/* pearls: 2 */}
+              <circle cx="36" cy="50" r="3" fill="white" stroke="#ddd" strokeWidth="0.8"/>
+              <circle cx="74" cy="50" r="3" fill="white" stroke="#ddd" strokeWidth="0.8"/>
+            </svg>
             <div>
               <div style={{
                 color: 'var(--rasta-red)',
