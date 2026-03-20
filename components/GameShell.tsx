@@ -347,7 +347,7 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
               flexShrink: 0,
             }}>
               <img
-                src="/logo-schlagonie.png"
+                src="/1774044838138.png"
                 alt="Schlagonie"
                 style={{
                   width: '100%',
