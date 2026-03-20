@@ -16,9 +16,6 @@ function isGameRoute(pathname: string) {
 function resolveHeader(pathname: string) {
   const parts = pathname.split('/').filter(Boolean);
 
-  if (pathname === '/') {
-    return { title: 'Schlagonie', emoji: '🌲', back: null };
-  }
   if (pathname === '/games') {
     return { title: 'Jeux', emoji: '🎮', back: null };
   }

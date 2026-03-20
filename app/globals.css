@@ -197,14 +197,25 @@ body {
 .animate-glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
 
 /* ===== GAME CONTAINER =====
-   Header + BottomNav sont cachés en jeu → plein écran
+   position:fixed + inset:0 → toujours calé sur le viewport visuel,
+   même quand la barre d'adresse Chrome mobile est visible.
+   height:100dvh déborde car il inclut la barre → scroll indésirable.
 */
 .game-container {
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  height: 100dvh;
   background: var(--game-bg);
   overflow: hidden;
+  touch-action: none;    /* bloque tout scroll natif pendant le jeu */
+  user-select: none;
+}
+
+/* Empêche le scroll du body quand un jeu est affiché */
+body:has(.game-container) {
+  overflow: hidden;
+  touch-action: none;
 }
 
 /* ===== HUD ===== */

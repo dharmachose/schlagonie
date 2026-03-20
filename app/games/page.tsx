@@ -1,12 +1,15 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import { GAMES, LEVEL_LABELS } from '@/lib/games/config';
 import type { DifficultyLevel } from '@/lib/types';
 
 export default function GamesPage() {
-  const { isLevelCompleted, getBestTime } = useStore();
+  const { player, isLevelCompleted, getBestTime } = useStore();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const formatTime = (ms: number) => {
     const s = Math.floor(ms / 1000);
@@ -15,37 +18,43 @@ export default function GamesPage() {
   };
 
   return (
-    <div style={{ padding: '24px 16px', maxWidth: '480px', margin: '0 auto' }}>
-      <h1 style={{ color: 'var(--rasta-gold)', fontSize: '24px', fontWeight: 900, marginBottom: '22px', letterSpacing: '-0.5px' }}>
-        🎮 Choisir un Jeu
-      </h1>
+    <div style={{ padding: '16px 16px 8px', maxWidth: '480px', margin: '0 auto' }}>
+
+      {/* Greeting discret */}
+      {mounted && player && (
+        <p style={{
+          color: 'var(--text-muted)',
+          fontSize: '13px',
+          marginBottom: '18px',
+          letterSpacing: '0.2px',
+        }}>
+          Bienvenue, <span style={{ color: 'var(--rasta-gold)', fontWeight: 700 }}>{player.name}</span> 🌲
+        </p>
+      )}
 
       {GAMES.map((game) => (
-        <div key={game.id} className="card-vosges" style={{ marginBottom: '16px' }}>
-          {/* Game header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px' }}>
+        <div key={game.id} className="card-vosges" style={{ marginBottom: '14px' }}>
+          {/* En-tête du jeu */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
             <div style={{
-              fontSize: '38px',
-              width: '56px',
-              height: '56px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              fontSize: '36px',
+              width: '52px', height: '52px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: `${game.color}18`,
-              borderRadius: '14px',
+              borderRadius: '13px',
               border: `1px solid ${game.color}40`,
               flexShrink: 0,
             }}>
               {game.emoji}
             </div>
             <div>
-              <div style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '17px' }}>{game.title}</div>
-              <div style={{ color: 'var(--text-muted)', fontSize: '13px', marginTop: '3px' }}>{game.description}</div>
+              <div style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: '16px' }}>{game.title}</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '2px' }}>{game.description}</div>
             </div>
           </div>
 
-          {/* Level grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
+          {/* Grille des niveaux */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '7px' }}>
             {([1, 2, 3, 4, 5] as DifficultyLevel[]).map((lvl) => {
               const done = isLevelCompleted(game.id, lvl);
               const best = getBestTime(game.id, lvl);
@@ -62,24 +71,12 @@ export default function GamesPage() {
                     color: done ? game.color : 'var(--text-muted)',
                   }}
                 >
-                  <div style={{ fontSize: '20px', lineHeight: 1 }}>
-                    {done ? '⭐' : lvl}
-                  </div>
-                  <div style={{
-                    fontSize: '11px',
-                    fontWeight: done ? 700 : 400,
-                    color: done ? game.color : 'var(--text-muted)',
-                  }}>
+                  <div style={{ fontSize: '19px', lineHeight: 1 }}>{done ? '⭐' : lvl}</div>
+                  <div style={{ fontSize: '10px', fontWeight: done ? 700 : 400 }}>
                     {LEVEL_LABELS[lvl].split(' ')[0]}
                   </div>
                   {best && (
-                    <div style={{
-                      fontSize: '10px',
-                      color: done ? game.color : 'var(--text-muted)',
-                      opacity: 0.8,
-                    }}>
-                      {formatTime(best)}
-                    </div>
+                    <div style={{ fontSize: '9px', opacity: 0.8 }}>{formatTime(best)}</div>
                   )}
                 </Link>
               );
