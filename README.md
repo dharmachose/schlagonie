@@ -1,6 +1,6 @@
 # Schlagonie 🌲
 
-> Mini-jeux mobile-first dans l'univers rasta des Vosges, dédiés à la reine d'Aydoilles.
+> Mini-jeux mobile-first dans l'univers rasta des Vosges, dédiés à la reine de La Baffe.
 
 ## Stack
 
