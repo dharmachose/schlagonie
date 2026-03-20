@@ -8,27 +8,27 @@ import PlayerSetup from '@/components/PlayerSetup';
 // Small cannabis leaf pip — green when done, muted when not
 function LeafPip({ done }: { done: boolean }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style={{ display: 'block', opacity: done ? 1 : 0.15, flexShrink: 0 }}>
-      <path d="M10,13 C8.5,9 8,5 10,1.5 C12,5 11.5,9 10,13Z" fill="#2ECC40"/>
-      <g transform="rotate(-33 10 13)">
-        <path d="M10,13 C8.8,10 8.4,6.5 10,3.5 C11.6,6.5 11.2,10 10,13Z" fill="#27AE60"/>
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" style={{ display: 'block', opacity: done ? 1 : 0.15, flexShrink: 0 }}>
+      <path d="M10,11 C8.2,7.5 7.5,4 10,0.5 C12.5,4 11.8,7.5 10,11Z" fill="#2ECC40"/>
+      <g transform="rotate(-33 10 11)">
+        <path d="M10,11 C8.6,8 8.2,5 10,2 C11.8,5 11.4,8 10,11Z" fill="#27AE60"/>
       </g>
-      <g transform="rotate(33 10 13)">
-        <path d="M10,13 C8.8,10 8.4,6.5 10,3.5 C11.6,6.5 11.2,10 10,13Z" fill="#27AE60"/>
+      <g transform="rotate(33 10 11)">
+        <path d="M10,11 C8.6,8 8.2,5 10,2 C11.8,5 11.4,8 10,11Z" fill="#27AE60"/>
       </g>
-      <g transform="rotate(-63 10 13)">
-        <path d="M10,13 C9.1,11 8.8,8.5 10,6 C11.2,8.5 10.9,11 10,13Z" fill="#229954"/>
+      <g transform="rotate(-63 10 11)">
+        <path d="M10,11 C9,9 8.6,6.5 10,4 C11.4,6.5 11,9 10,11Z" fill="#229954"/>
       </g>
-      <g transform="rotate(63 10 13)">
-        <path d="M10,13 C9.1,11 8.8,8.5 10,6 C11.2,8.5 10.9,11 10,13Z" fill="#229954"/>
+      <g transform="rotate(63 10 11)">
+        <path d="M10,11 C9,9 8.6,6.5 10,4 C11.4,6.5 11,9 10,11Z" fill="#229954"/>
       </g>
-      <g transform="rotate(-89 10 13)">
-        <path d="M10,13 C9.4,12.2 9.1,10.5 10,8 C10.9,10.5 10.6,12.2 10,13Z" fill="#1a7a40"/>
+      <g transform="rotate(-90 10 11)">
+        <path d="M10,11 C9.3,9.8 9,8.2 10,6 C11,8.2 10.7,9.8 10,11Z" fill="#1a7a40"/>
       </g>
-      <g transform="rotate(89 10 13)">
-        <path d="M10,13 C9.4,12.2 9.1,10.5 10,8 C10.9,10.5 10.6,12.2 10,13Z" fill="#1a7a40"/>
+      <g transform="rotate(90 10 11)">
+        <path d="M10,11 C9.3,9.8 9,8.2 10,6 C11,8.2 10.7,9.8 10,11Z" fill="#1a7a40"/>
       </g>
-      <line x1="10" y1="13" x2="10" y2="18" stroke="#1a6e1a" strokeWidth="1.6" strokeLinecap="round"/>
+      <line x1="10" y1="11" x2="10" y2="13.5" stroke="#1a6e1a" strokeWidth="1.4" strokeLinecap="round"/>
     </svg>
   );
 }
