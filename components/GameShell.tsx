@@ -115,46 +115,70 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
     <div className="game-container">
       {/* HUD */}
       <div className="hud">
+        {/* Bouton quitter */}
         <button
           onClick={() => router.back()}
           style={{
-            background: 'none',
-            border: 'none',
+            background: 'rgba(220,20,60,0.12)',
+            border: '1px solid rgba(220,20,60,0.3)',
+            borderRadius: '10px',
             color: 'var(--rasta-red)',
-            fontSize: '24px',
+            width: '36px', height: '36px',
             cursor: 'pointer',
-            padding: '6px',
+            padding: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            flexShrink: 0,
             WebkitTapHighlightColor: 'transparent',
-            lineHeight: 1,
           }}
+          aria-label="Quitter"
         >
-          ✕
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
         </button>
 
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '15px', color: 'var(--text-secondary)', fontWeight: 700 }}>
+        {/* Centre : titre + niveau */}
+        <div style={{ textAlign: 'center', flex: 1 }}>
+          <div style={{ fontSize: '14px', color: 'var(--text-secondary)', fontWeight: 800, letterSpacing: '0.2px' }}>
             {gameEmoji} {gameTitle}
           </div>
-          <div style={{
-            fontSize: '12px',
-            color: 'var(--rasta-green-light)',
-            marginTop: '2px',
-            background: 'rgba(50,205,50,0.12)',
-            borderRadius: '10px',
-            padding: '1px 8px',
-            display: 'inline-block',
-          }}>
-            {LEVEL_LABELS[level]}
+          {/* Dots de niveau */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '4px' }}>
+            {[1, 2, 3, 4, 5].map(l => (
+              <div key={l} style={{
+                width:  l <= level ? '7px' : '5px',
+                height: l <= level ? '7px' : '5px',
+                borderRadius: '50%',
+                background: l <= level ? 'var(--rasta-gold)' : 'rgba(255,255,255,0.15)',
+                boxShadow: l <= level ? '0 0 5px rgba(255,215,0,0.5)' : 'none',
+                transition: 'all 0.2s',
+              }} />
+            ))}
+            <span style={{
+              fontSize: '10px',
+              color: 'var(--rasta-green-light)',
+              marginLeft: '4px',
+              fontWeight: 600,
+              background: 'rgba(50,205,50,0.12)',
+              borderRadius: '8px',
+              padding: '1px 6px',
+            }}>
+              {LEVEL_LABELS[level]}
+            </span>
           </div>
         </div>
 
+        {/* Chrono */}
         <div style={{
           fontFamily: 'monospace',
           color: 'var(--rasta-gold)',
           fontSize: '20px',
           fontWeight: 900,
           letterSpacing: '1px',
-          textShadow: '0 0 12px rgba(255,215,0,0.5)',
+          textShadow: '0 0 10px rgba(255,215,0,0.45)',
+          flexShrink: 0,
+          minWidth: '48px',
+          textAlign: 'right',
         }}>
           {formatTime(elapsedMs)}
         </div>
