@@ -6,22 +6,39 @@ import { useStore } from '@/lib/store';
 import { GAMES, LEVEL_LABELS } from '@/lib/games/config';
 import type { DifficultyLevel } from '@/lib/types';
 
-// Cannabis leaf SVG icon — used instead of ⭐ for completed levels
+// Cannabis leaf SVG — 7 folioles pointues, tige courte, hub en bas
 function LeafIcon({ size = 20, opacity = 1 }: { size?: number; opacity?: number }) {
+  // Hub at (10,13). Each finger is a pointed bezier path rotated around hub.
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" style={{ opacity, display: 'block' }}>
-      {/* centre top */}
-      <ellipse cx="10" cy="4.5" rx="2.2" ry="4.8" fill="#32CD32" transform="rotate(0 10 10)"/>
-      {/* upper-left */}
-      <ellipse cx="10" cy="4.5" rx="1.9" ry="4.2" fill="#2db82d" transform="rotate(-40 10 10)"/>
-      {/* upper-right */}
-      <ellipse cx="10" cy="4.5" rx="1.9" ry="4.2" fill="#2db82d" transform="rotate(40 10 10)"/>
-      {/* lower-left */}
-      <ellipse cx="10" cy="4.5" rx="1.5" ry="3.4" fill="#1e8c1e" transform="rotate(-72 10 10)"/>
-      {/* lower-right */}
-      <ellipse cx="10" cy="4.5" rx="1.5" ry="3.4" fill="#1e8c1e" transform="rotate(72 10 10)"/>
-      {/* stem */}
-      <line x1="10" y1="11" x2="10" y2="19" stroke="#228B22" strokeWidth="1.8" strokeLinecap="round"/>
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" style={{ opacity, display: 'block', flexShrink: 0 }}>
+      {/* Centre — plus grande foliole */}
+      <path d="M10,13 C8.5,9 8,5 10,1.5 C12,5 11.5,9 10,13Z" fill="#2ECC40"/>
+      {/* Upper-left */}
+      <g transform="rotate(-33 10 13)">
+        <path d="M10,13 C8.8,10 8.4,6.5 10,3.5 C11.6,6.5 11.2,10 10,13Z" fill="#27AE60"/>
+      </g>
+      {/* Upper-right */}
+      <g transform="rotate(33 10 13)">
+        <path d="M10,13 C8.8,10 8.4,6.5 10,3.5 C11.6,6.5 11.2,10 10,13Z" fill="#27AE60"/>
+      </g>
+      {/* Lower-left */}
+      <g transform="rotate(-63 10 13)">
+        <path d="M10,13 C9.1,11 8.8,8.5 10,6 C11.2,8.5 10.9,11 10,13Z" fill="#229954"/>
+      </g>
+      {/* Lower-right */}
+      <g transform="rotate(63 10 13)">
+        <path d="M10,13 C9.1,11 8.8,8.5 10,6 C11.2,8.5 10.9,11 10,13Z" fill="#229954"/>
+      </g>
+      {/* Side-left */}
+      <g transform="rotate(-89 10 13)">
+        <path d="M10,13 C9.4,12.2 9.1,10.5 10,8 C10.9,10.5 10.6,12.2 10,13Z" fill="#1a7a40"/>
+      </g>
+      {/* Side-right */}
+      <g transform="rotate(89 10 13)">
+        <path d="M10,13 C9.4,12.2 9.1,10.5 10,8 C10.9,10.5 10.6,12.2 10,13Z" fill="#1a7a40"/>
+      </g>
+      {/* Tige très courte */}
+      <line x1="10" y1="13" x2="10" y2="18" stroke="#1a6e1a" strokeWidth="1.6" strokeLinecap="round"/>
     </svg>
   );
 }
