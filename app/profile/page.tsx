@@ -12,7 +12,7 @@ function getTitle(pts: number): { label: string; emoji: string } {
   if (pts < 12)  return { label: 'Montagnard·e',          emoji: '⛰️' };
   if (pts < 22)  return { label: 'Gardien·ne des Forêts', emoji: '🌲' };
   if (pts < 32)  return { label: 'Légende des Vosges',    emoji: '🔥' };
-  return           { label: 'Maître·sse de La Baffe',     emoji: '👑' };
+  return           { label: 'Maire de La Baffe',           emoji: '👑' };
 }
 
 // ── Badges ────────────────────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ function getBadges(
       unlocked: totalMs >= 600_000,
     },
     {
-      id: 'master',   icon: '👑', label: 'Maître·sse Ultime',   desc: 'Tous les niveaux complétés',
+      id: 'master',   icon: '👑', label: 'Maire de La Baffe',    desc: 'Tous les niveaux complétés',
       unlocked: totalPoints >= GAMES.length * 5,
     },
   ];
