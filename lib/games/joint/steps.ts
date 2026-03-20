@@ -70,7 +70,7 @@ export const STEPS: JointStep[] = [
   },
   {
     id: 'place-toncart',
-    emoji: '📌',
+    emoji: '📦',
     label: 'Poser le toncart',
     description: 'Glisse le toncart au bout de la feuille',
     action: 'tap',
