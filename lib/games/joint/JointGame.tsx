@@ -137,6 +137,33 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
 
+  const startHold = useCallback(() => {
+    if (phase !== 'active') return;
+    if (holdStartRef.current !== null) return; // already started by touch
+    const step = STEPS[stepIdx];
+    if (step.action !== 'hold') return;
+    holdStartRef.current = Date.now();
+    const target = step.target ?? 1400;
+    const animate = () => {
+      if (holdStartRef.current === null) return;
+      const progress = Math.min(((Date.now() - holdStartRef.current) / target) * 100, 100);
+      setHoldProgress(progress);
+      if (progress >= 100) {
+        holdStartRef.current = null;
+        completeStepRef.current();
+        return;
+      }
+      holdRafRef.current = requestAnimationFrame(animate);
+    };
+    holdRafRef.current = requestAnimationFrame(animate);
+  }, [phase, stepIdx]);
+
+  const cancelHold = useCallback(() => {
+    holdStartRef.current = null;
+    if (holdRafRef.current) cancelAnimationFrame(holdRafRef.current);
+    setHoldProgress(0);
+  }, []);
+
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (phase !== 'active') return;
     touchStartX.current = e.touches[0].clientX;
@@ -144,31 +171,16 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
 
     const step = STEPS[stepIdx];
     if (step.action === 'hold') {
-      holdStartRef.current = Date.now();
-      const target = step.target ?? 1400;
-      const animate = () => {
-        if (holdStartRef.current === null) return;
-        const progress = Math.min(((Date.now() - holdStartRef.current) / target) * 100, 100);
-        setHoldProgress(progress);
-        if (progress >= 100) {
-          holdStartRef.current = null;
-          completeStepRef.current();
-          return;
-        }
-        holdRafRef.current = requestAnimationFrame(animate);
-      };
-      holdRafRef.current = requestAnimationFrame(animate);
+      startHold();
     }
-  }, [phase, stepIdx]);
+  }, [phase, stepIdx, startHold]);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     if (phase !== 'active') return;
     const step = STEPS[stepIdx];
 
     if (step.action === 'hold') {
-      holdStartRef.current = null;
-      if (holdRafRef.current) cancelAnimationFrame(holdRafRef.current);
-      setHoldProgress(0);
+      cancelHold();
       return;
     }
 
@@ -203,7 +215,7 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
       }
       setTimeout(() => setPhase('active'), 300);
     }
-  }, [phase, stepIdx, tapCount, completeStep]);
+  }, [phase, stepIdx, tapCount, completeStep, cancelHold]);
 
   const handleClick = useCallback(() => {
     if (phase !== 'active') return;
@@ -333,6 +345,10 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
         }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        onTouchCancel={cancelHold}
+        onMouseDown={startHold}
+        onMouseUp={cancelHold}
+        onMouseLeave={cancelHold}
         onClick={handleClick}
       >
         {/* Amélioration 2 — arc countdown (top-left) */}
