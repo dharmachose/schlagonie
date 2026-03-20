@@ -45,7 +45,6 @@ function IconProfile({ active }: { active: boolean }) {
 }
 
 const NAV_ITEMS = [
-  { href: '/',            label: 'Accueil',    icon: IconHome        },
   { href: '/games',       label: 'Jeux',       icon: IconGames       },
   { href: '/leaderboard', label: 'Classement', icon: IconLeaderboard },
   { href: '/profile',     label: 'Profil',     icon: IconProfile     },
@@ -86,15 +85,15 @@ export default function BottomNav() {
         height: '62px',
       }}
     >
-      {/* Pill glissante animée */}
+      {/* Pill glissante animée (3 items → chacun fait 33.33%) */}
       {activeIndex >= 0 && (
         <div
           aria-hidden
           style={{
             position: 'absolute',
             top: '6px',
-            left: `calc(${activeIndex} * 25%)`,
-            width: '25%',
+            left: `calc(${activeIndex} * 33.333%)`,
+            width: '33.333%',
             height: 'calc(100% - 12px - env(safe-area-inset-bottom))',
             padding: '0 10px',
             pointerEvents: 'none',
