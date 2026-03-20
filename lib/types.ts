@@ -28,7 +28,6 @@ export interface GameMeta {
   title: string;
   emoji: string;
   description: string;
-  color: string;
   available: boolean;
 }
 

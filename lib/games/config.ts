@@ -6,7 +6,6 @@ export const GAMES: GameMeta[] = [
     title: 'Mémoire des Vosges',
     emoji: '🌲',
     description: 'Retrouve les paires cachées dans la forêt vosge !',
-    color: '#228B22',
     available: true,
   },
   {
@@ -14,7 +13,6 @@ export const GAMES: GameMeta[] = [
     title: 'Tetris Shlagonie',
     emoji: '🪵',
     description: 'Empile les sapins et les bûches pour battre le brouillard !',
-    color: '#32CD32',
     available: true,
   },
   {
@@ -22,7 +20,6 @@ export const GAMES: GameMeta[] = [
     title: 'Crush des Vosges',
     emoji: '👋',
     description: 'Aligne les baffes, sapins et cocas pour scorer !',
-    color: '#FFD700',
     available: true,
   },
   {
@@ -30,7 +27,6 @@ export const GAMES: GameMeta[] = [
     title: 'Shlagonie Fuit !',
     emoji: '👑',
     description: 'La reine Shlagonie fuit les fruits et légumes dans les ruelles des Vosges !',
-    color: '#DC143C',
     available: true,
   },
   {
@@ -38,7 +34,6 @@ export const GAMES: GameMeta[] = [
     title: 'Qui Roule Bamboule',
     emoji: '🌿',
     description: 'Roule le joint parfait le plus vite possible — weed, toncart, OCB, feu !',
-    color: '#00C851',
     available: true,
   },
   {
@@ -46,7 +41,6 @@ export const GAMES: GameMeta[] = [
     title: "Clash of Village",
     emoji: '⚔️',
     description: "Aydoilles attaque ! Place tes tours et défends le village de La Baffe contre les hordes d'envahisseurs !",
-    color: '#8B6914',
     available: true,
   },
   {
@@ -54,7 +48,6 @@ export const GAMES: GameMeta[] = [
     title: 'Allo ?!',
     emoji: '📞',
     description: "Réponds aux clients sans faire de faute ! Orthographe, grammaire, chiffres plausibles... Décrochez !",
-    color: '#4A90D9',
     available: true,
   },
 ];

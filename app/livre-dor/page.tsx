@@ -279,8 +279,8 @@ export default async function LivreOrPage() {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
                     <div style={{
                       width: 46, height: 46, borderRadius: 12,
-                      background: `${game.color}18`,
-                      border: `1.5px solid ${game.color}40`,
+                      background: 'rgba(50,205,50,0.12)',
+                      border: '1.5px solid rgba(50,205,50,0.25)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 24, flexShrink: 0,
                     }}>

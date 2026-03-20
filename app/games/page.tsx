@@ -6,6 +6,26 @@ import { useStore } from '@/lib/store';
 import { GAMES, LEVEL_LABELS } from '@/lib/games/config';
 import type { DifficultyLevel } from '@/lib/types';
 
+// Cannabis leaf SVG icon — used instead of ⭐ for completed levels
+function LeafIcon({ size = 20, opacity = 1 }: { size?: number; opacity?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" style={{ opacity, display: 'block' }}>
+      {/* centre top */}
+      <ellipse cx="10" cy="4.5" rx="2.2" ry="4.8" fill="#32CD32" transform="rotate(0 10 10)"/>
+      {/* upper-left */}
+      <ellipse cx="10" cy="4.5" rx="1.9" ry="4.2" fill="#2db82d" transform="rotate(-40 10 10)"/>
+      {/* upper-right */}
+      <ellipse cx="10" cy="4.5" rx="1.9" ry="4.2" fill="#2db82d" transform="rotate(40 10 10)"/>
+      {/* lower-left */}
+      <ellipse cx="10" cy="4.5" rx="1.5" ry="3.4" fill="#1e8c1e" transform="rotate(-72 10 10)"/>
+      {/* lower-right */}
+      <ellipse cx="10" cy="4.5" rx="1.5" ry="3.4" fill="#1e8c1e" transform="rotate(72 10 10)"/>
+      {/* stem */}
+      <line x1="10" y1="11" x2="10" y2="19" stroke="#228B22" strokeWidth="1.8" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
 export default function GamesPage() {
   const { player, isLevelCompleted, getBestTime } = useStore();
   const [mounted, setMounted] = useState(false);
@@ -20,29 +40,23 @@ export default function GamesPage() {
   return (
     <div style={{ padding: '16px 16px 8px', maxWidth: '480px', margin: '0 auto' }}>
 
-      {/* Greeting discret */}
       {mounted && player && (
-        <p style={{
-          color: 'var(--text-muted)',
-          fontSize: '13px',
-          marginBottom: '18px',
-          letterSpacing: '0.2px',
-        }}>
+        <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: '18px', letterSpacing: '0.2px' }}>
           Bienvenue, <span style={{ color: 'var(--rasta-gold)', fontWeight: 700 }}>{player.name}</span> 🌲
         </p>
       )}
 
       {GAMES.map((game) => (
         <div key={game.id} className="card-vosges" style={{ marginBottom: '14px' }}>
-          {/* En-tête du jeu */}
+          {/* Game header */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
             <div style={{
-              fontSize: '36px',
+              fontSize: '34px',
               width: '52px', height: '52px',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: `${game.color}18`,
+              background: 'rgba(50,205,50,0.1)',
               borderRadius: '13px',
-              border: `1px solid ${game.color}40`,
+              border: '1px solid rgba(50,205,50,0.2)',
               flexShrink: 0,
             }}>
               {game.emoji}
@@ -53,7 +67,7 @@ export default function GamesPage() {
             </div>
           </div>
 
-          {/* Grille des niveaux */}
+          {/* Level grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '7px' }}>
             {([1, 2, 3, 4, 5] as DifficultyLevel[]).map((lvl) => {
               const done = isLevelCompleted(game.id, lvl);
@@ -65,18 +79,24 @@ export default function GamesPage() {
                   className="level-btn"
                   style={{
                     background: done
-                      ? `linear-gradient(145deg, ${game.color}30, ${game.color}18)`
+                      ? 'linear-gradient(145deg, rgba(255,215,0,0.18), rgba(255,215,0,0.08))'
                       : 'linear-gradient(145deg, var(--bg-card-deep), var(--bg-dark))',
-                    border: `2px solid ${done ? game.color : 'var(--border-color)'}`,
-                    color: done ? game.color : 'var(--text-muted)',
+                    border: `2px solid ${done ? 'rgba(255,215,0,0.7)' : 'var(--border-color)'}`,
+                    color: done ? '#FFD700' : 'var(--text-muted)',
+                    boxShadow: done ? '0 0 10px rgba(255,215,0,0.18)' : 'none',
                   }}
                 >
-                  <div style={{ fontSize: '19px', lineHeight: 1 }}>{done ? '⭐' : lvl}</div>
-                  <div style={{ fontSize: '10px', fontWeight: done ? 700 : 400 }}>
+                  <div style={{ lineHeight: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', height: '22px' }}>
+                    {done
+                      ? <LeafIcon size={19} />
+                      : <span style={{ fontSize: '16px', fontWeight: 700 }}>{lvl}</span>
+                    }
+                  </div>
+                  <div style={{ fontSize: '10px', fontWeight: done ? 700 : 400, marginTop: '2px' }}>
                     {LEVEL_LABELS[lvl].split(' ')[0]}
                   </div>
                   {best && (
-                    <div style={{ fontSize: '9px', opacity: 0.8 }}>{formatTime(best)}</div>
+                    <div style={{ fontSize: '9px', opacity: 0.75 }}>{formatTime(best)}</div>
                   )}
                 </Link>
               );
