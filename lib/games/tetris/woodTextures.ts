@@ -1,38 +1,36 @@
 import { createNoise2D } from 'simplex-noise';
 import type { TetrominoType } from './logic';
 
-// ── Wood species — one per tetromino type ─────────────────────────────────
 export type WoodSpecies = 'pine' | 'oak' | 'walnut' | 'birch' | 'cherry' | 'maple' | 'larch';
 
 export const PIECE_SPECIES: Record<TetrominoType, WoodSpecies> = {
-  I: 'pine',    // Pin des Vosges — brun clair, grain long
-  O: 'oak',     // Chêne          — cernes concentriques (pièce carrée)
-  T: 'walnut',  // Noyer          — chocolat foncé
-  S: 'birch',   // Bouleau        — crème ivoire
-  Z: 'cherry',  // Cerisier       — brun rouge chaud
-  J: 'maple',   // Érable         — doré clair
-  L: 'larch',   // Mélèze         — brun ambré
+  I: 'pine',    // tronc droit — grain long
+  O: 'oak',     // coupe transversale — cernes concentriques
+  T: 'walnut',  // fourche de branche foncée
+  S: 'birch',   // bouleau clair
+  Z: 'cherry',  // cerisier rouge-brun
+  J: 'maple',   // érable doré
+  L: 'larch',   // mélèze ambré
 };
 
 interface WoodPalette {
-  heartwood: [number, number, number]; // inner dark grain
-  sapwood:   [number, number, number]; // outer light grain
-  bark:      [number, number, number]; // outer edge color
-  ringCount: number;                   // ring density
-  noiseAmp:  number;                   // grain irregularity
+  heartwood: [number, number, number];
+  sapwood:   [number, number, number];
+  bark:      [number, number, number];
+  ringCount: number;
+  noiseAmp:  number;
 }
 
-const PALETTES: Record<WoodSpecies, WoodPalette> = {
-  pine:   { heartwood: [168, 122,  58], sapwood: [228, 195, 135], bark: [ 80, 48, 18], ringCount: 3.5, noiseAmp: 0.28 },
-  oak:    { heartwood: [102,  62,  22], sapwood: [162, 118,  62], bark: [ 50, 28, 10], ringCount: 5.0, noiseAmp: 0.22 },
-  walnut: { heartwood: [ 58,  28,   8], sapwood: [118,  72,  28], bark: [ 28, 12,  4], ringCount: 6.0, noiseAmp: 0.18 },
-  birch:  { heartwood: [205, 192, 165], sapwood: [242, 235, 218], bark: [ 45, 35, 22], ringCount: 2.8, noiseAmp: 0.32 },
-  cherry: { heartwood: [128,  48,  42], sapwood: [172,  88,  72], bark: [ 58, 22, 20], ringCount: 4.2, noiseAmp: 0.24 },
-  maple:  { heartwood: [188, 152,  92], sapwood: [232, 205, 155], bark: [ 88, 62, 32], ringCount: 3.2, noiseAmp: 0.30 },
-  larch:  { heartwood: [132,  78,  25], sapwood: [188, 138,  62], bark: [ 65, 38, 12], ringCount: 4.8, noiseAmp: 0.24 },
+export const PALETTES: Record<WoodSpecies, WoodPalette> = {
+  pine:   { heartwood: [142, 94,  38], sapwood: [218, 180, 108], bark: [50,  26,  8 ], ringCount: 2.8, noiseAmp: 0.24 },
+  oak:    { heartwood: [82,  46,  12], sapwood: [142, 98,  44 ], bark: [32,  15,  4 ], ringCount: 4.5, noiseAmp: 0.18 },
+  walnut: { heartwood: [36,  15,  3 ], sapwood: [88,  48,  15 ], bark: [18,  8,   2 ], ringCount: 5.5, noiseAmp: 0.15 },
+  birch:  { heartwood: [192, 175, 145], sapwood: [238, 228, 208], bark: [28,  20,  12], ringCount: 2.2, noiseAmp: 0.30 },
+  cherry: { heartwood: [95,  42,  18], sapwood: [152, 88,  46 ], bark: [38,  15,  6 ], ringCount: 3.8, noiseAmp: 0.20 },
+  maple:  { heartwood: [165, 125, 62], sapwood: [220, 188, 128], bark: [62,  40,  15], ringCount: 3.0, noiseAmp: 0.26 },
+  larch:  { heartwood: [112, 64,  14], sapwood: [168, 118, 45 ], bark: [44,  22,  5 ], ringCount: 4.2, noiseAmp: 0.22 },
 };
 
-/** Minimal seeded PRNG (Mulberry32) for deterministic noise per species. */
 function seededPrng(seed: number): () => number {
   return () => {
     seed = (seed + 0x6D2B79F5) | 0;
@@ -42,67 +40,51 @@ function seededPrng(seed: number): () => number {
   };
 }
 
-const SPECIES_SEEDS: Record<WoodSpecies, number> = {
+const SEEDS: Record<WoodSpecies, number> = {
   pine: 11, oak: 22, walnut: 33, birch: 44, cherry: 55, maple: 66, larch: 77,
 };
 
 /**
- * Generate a realistic wood texture for a piece of given pixel dimensions.
- *
- * Orientation is inferred from aspect ratio:
- *   ~square   → cross-section view (concentric rings)
- *   wider     → log side view (grain horizontal)
- *   taller    → trunk side view (grain vertical)
+ * Texture face (cap) — grain / cernes concentriques.
+ * width/height en pixels, correspondant aux dimensions réelles de la pièce.
  */
 export function generateWoodTexture(
   width: number,
   height: number,
   species: WoodSpecies,
 ): HTMLCanvasElement {
-  const pal    = PALETTES[species];
-  const seed   = SPECIES_SEEDS[species];
-  const noise  = createNoise2D(seededPrng(seed));
-  const canvas = document.createElement('canvas');
-  canvas.width  = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d')!;
+  const pal   = PALETTES[species];
+  const noise = createNoise2D(seededPrng(SEEDS[species]));
+  const cv    = document.createElement('canvas');
+  cv.width = width; cv.height = height;
+  const ctx = cv.getContext('2d')!;
   const img = ctx.createImageData(width, height);
   const d   = img.data;
 
-  const ratio        = width / height;
-  const isCrossSection = ratio > 0.55 && ratio < 1.8;
-  const isHorizontal   = ratio >= 1.8;
+  const ratio    = width / height;
+  const isSquare = ratio >= 0.80 && ratio <= 1.25;
+  const isWide   = ratio >  1.25;
 
   for (let py = 0; py < height; py++) {
     for (let px = 0; px < width; px++) {
       let ring: number;
-
-      if (isCrossSection) {
-        // Oak cross-section: concentric rings warped by noise
-        const nx = (px / width  - 0.5) * 2.2;
-        const ny = (py / height - 0.5) * 2.2;
+      if (isSquare) {
+        const nx   = (px / width  - 0.5) * 2.4;
+        const ny   = (py / height - 0.5) * 2.4;
         const dist = Math.sqrt(nx * nx + ny * ny);
-        const warp = noise(nx * 1.8, ny * 1.8) * 0.40
-                   + noise(nx * 5.0, ny * 5.0) * 0.10;
+        const warp = noise(nx * 1.6, ny * 1.6) * 0.45 + noise(nx * 4.5, ny * 4.5) * 0.12;
         ring = Math.sin((dist + warp) * Math.PI * pal.ringCount);
-      } else if (isHorizontal) {
-        // Side of a horizontal log — grain runs along X, rings seen as Y-stripes
+      } else if (isWide) {
         const normY = py / height;
-        const warp  = noise(px * 0.012, py * 0.055) * 0.38
-                    + noise(px * 0.035, py * 0.110) * 0.12;
+        const warp  = noise(px * 0.010, py * 0.052) * 0.42 + noise(px * 0.032, py * 0.108) * 0.14;
         ring = Math.sin((normY + warp) * Math.PI * pal.ringCount);
       } else {
-        // Side of a vertical trunk — grain runs along Y, rings seen as X-stripes
         const normX = px / width;
-        const warp  = noise(px * 0.055, py * 0.012) * 0.38
-                    + noise(px * 0.110, py * 0.035) * 0.12;
+        const warp  = noise(px * 0.052, py * 0.010) * 0.42 + noise(px * 0.108, py * 0.032) * 0.14;
         ring = Math.sin((normX + warp) * Math.PI * pal.ringCount);
       }
-
-      // Fine grain overlay — adds micro-irregularity
-      const fine = noise(px * 0.065, py * 0.065) * pal.noiseAmp;
+      const fine = noise(px * 0.058, py * 0.058) * pal.noiseAmp;
       const t    = Math.max(0, Math.min(1, ring * 0.5 + 0.5 + fine));
-
       const i    = (py * width + px) * 4;
       d[i]     = Math.round(pal.heartwood[0] + (pal.sapwood[0] - pal.heartwood[0]) * t);
       d[i + 1] = Math.round(pal.heartwood[1] + (pal.sapwood[1] - pal.heartwood[1]) * t);
@@ -111,10 +93,42 @@ export function generateWoodTexture(
     }
   }
   ctx.putImageData(img, 0, 0);
-  return canvas;
+  return cv;
 }
 
-/** Dark bark color string for outer-edge strokes. */
-export function getBarkColor(species: WoodSpecies): [number, number, number] {
+/**
+ * Texture écorce (sides extrudés) — striations verticales sombres.
+ */
+export function generateBarkTexture(
+  width: number,
+  height: number,
+  species: WoodSpecies,
+): HTMLCanvasElement {
+  const [r0, g0, b0] = PALETTES[species].bark;
+  const noise = createNoise2D(seededPrng(SEEDS[species] + 100));
+  const cv    = document.createElement('canvas');
+  cv.width = width; cv.height = height;
+  const ctx = cv.getContext('2d')!;
+  const img = ctx.createImageData(width, height);
+  const d   = img.data;
+
+  for (let py = 0; py < height; py++) {
+    for (let px = 0; px < width; px++) {
+      // Striations verticales + rugosité fine
+      const striation = noise(px * 0.035, py * 0.005) * 0.5 + 0.5;
+      const rough     = noise(px * 0.18,  py * 0.18 ) * 0.5 + 0.5;
+      const t = striation * 0.65 + rough * 0.35;
+      const i = (py * width + px) * 4;
+      d[i]     = Math.min(255, Math.round(r0 + t * 38));
+      d[i + 1] = Math.min(255, Math.round(g0 + t * 22));
+      d[i + 2] = Math.min(255, Math.round(b0 + t * 8 ));
+      d[i + 3] = 255;
+    }
+  }
+  ctx.putImageData(img, 0, 0);
+  return cv;
+}
+
+export function getBarkRgb(species: WoodSpecies): [number, number, number] {
   return PALETTES[species].bark;
 }
