@@ -103,18 +103,19 @@ export default function GamesPage() {
                     boxShadow: done ? '0 0 10px rgba(255,215,0,0.18)' : 'none',
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '32px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '34px', flexShrink: 0 }}>
                     {done
                       ? <LeafIcon size={32} />
                       : <span style={{ fontSize: '18px', fontWeight: 700 }}>{lvl}</span>
                     }
                   </div>
-                  <div style={{ fontSize: '10px', fontWeight: done ? 700 : 400, marginTop: '2px' }}>
+                  <div style={{ fontSize: '10px', fontWeight: done ? 700 : 400, lineHeight: 1.2 }}>
                     {LEVEL_LABELS[lvl].split(' ')[0]}
                   </div>
-                  {best && (
-                    <div style={{ fontSize: '9px', opacity: 0.75 }}>{formatTime(best)}</div>
-                  )}
+                  {/* Toujours présent pour garder la hauteur uniforme */}
+                  <div style={{ fontSize: '9px', opacity: 0.7, height: '11px', lineHeight: '11px' }}>
+                    {best ? formatTime(best) : ''}
+                  </div>
                 </Link>
               );
             })}
