@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import BottomNav from '@/components/BottomNav';
+import AppHeader  from '@/components/AppHeader';
+import BottomNav  from '@/components/BottomNav';
+import PageLayout from '@/components/PageLayout';
 
 export const metadata: Metadata = {
   title: 'Schlagonie 🌲',
@@ -20,10 +22,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr">
       <body>
-        {/* Page content with bottom nav spacing */}
-        <div style={{ paddingBottom: '74px', minHeight: '100dvh' }}>
-          {children}
-        </div>
+        <AppHeader />
+        <PageLayout>{children}</PageLayout>
         <BottomNav />
       </body>
     </html>

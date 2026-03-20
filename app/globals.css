@@ -196,11 +196,13 @@ body {
 .animate-pulse-gold { animation: pulse-gold 2s ease-in-out infinite; }
 .animate-glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
 
-/* ===== GAME CONTAINER ===== */
+/* ===== GAME CONTAINER =====
+   Header + BottomNav sont cachés en jeu → plein écran
+*/
 .game-container {
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 74px - env(safe-area-inset-bottom, 0px));
+  height: 100dvh;
   background: var(--game-bg);
   overflow: hidden;
 }
