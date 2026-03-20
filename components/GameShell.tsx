@@ -338,8 +338,8 @@ export default function GameShell({ gameId, gameTitle, gameEmoji, level, childre
           }} className="animate-bounce-in">
             {/* Schlagonie mascot — photo circulaire avec contour rasta */}
             <div style={{
-              width: '130px',
-              height: '130px',
+              width: '190px',
+              height: '190px',
               borderRadius: '50%',
               padding: '4px',
               background: 'conic-gradient(#DC143C 0deg 120deg, #FFD700 120deg 240deg, #32CD32 240deg 360deg)',
