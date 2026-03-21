@@ -169,6 +169,46 @@ export async function getGameLeaderboard(gameId: GameId): Promise<LeaderboardEnt
   }
 }
 
+export interface PlayerMedal {
+  gameId: GameId;
+  level: DifficultyLevel;
+  rank: 1 | 2 | 3;
+  fastestMs: number;
+}
+
+export async function getPlayerMedals(playerName: string): Promise<PlayerMedal[] | null> {
+  const sql = getSql();
+  if (!sql) return null;
+  try {
+    await ensureTable(sql);
+    const rows = await sql`
+      WITH ranked AS (
+        SELECT
+          player_name,
+          game_id,
+          level,
+          MIN(elapsed_ms)::int AS fastest_ms,
+          RANK() OVER (PARTITION BY game_id, level ORDER BY MIN(elapsed_ms)) AS rnk
+        FROM scores
+        GROUP BY player_name, game_id, level
+      )
+      SELECT game_id, level::int AS level, rnk::int AS rank, fastest_ms
+      FROM ranked
+      WHERE player_name = ${playerName} AND rnk <= 3
+      ORDER BY rnk, game_id, level
+    `;
+    return rows.map((r) => ({
+      gameId: r.game_id as GameId,
+      level: r.level as DifficultyLevel,
+      rank: r.rank as 1 | 2 | 3,
+      fastestMs: r.fastest_ms as number,
+    }));
+  } catch (err) {
+    console.error('[leaderboard] getPlayerMedals error', err);
+    return null;
+  }
+}
+
 export async function getSpeedLeaderboard(
   gameId: GameId,
   level: DifficultyLevel

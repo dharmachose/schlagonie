@@ -5,7 +5,7 @@ export const GAMES: GameMeta[] = [
     id: 'memory',
     title: 'Mémoire des Vosges',
     emoji: '🌲',
-    description: 'Retrouve les paires cachées dans la forêt vosge !',
+    description: 'Retrouve les paires cachées dans la forêt vosgienne !',
     available: true,
   },
   {
@@ -26,7 +26,7 @@ export const GAMES: GameMeta[] = [
     id: 'pacman',
     title: 'Shlagonie Fuit !',
     emoji: '👑',
-    description: 'La reine Shlagonie fuit les fruits et légumes dans les ruelles des Vosges !',
+    description: "La reine Shlagonie fuit les fruits et légumes dans les ruelles d'Épinal !",
     available: true,
   },
   {
