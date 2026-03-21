@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store';
 import { GAMES } from '@/lib/games/config';
 import PlayerSetup from '@/components/PlayerSetup';
+import type { PlayerMedal } from '@/lib/leaderboard';
 
 // ── Titre dynamique selon le score ────────────────────────────────────────────
 function getTitle(pts: number): { label: string; emoji: string } {
@@ -91,8 +92,18 @@ export default function ProfilePage() {
   const { player, totalPoints, getPointsForGame, completedLevels, setPlayer } = useStore();
   const [mounted, setMounted] = useState(false);
   const [editMode, setEditMode] = useState(false);
+  const [medals, setMedals] = useState<PlayerMedal[] | null>(null);
 
   useEffect(() => setMounted(true), []);
+
+  useEffect(() => {
+    if (!player) return;
+    fetch(`/api/leaderboard?type=medals&player=${encodeURIComponent(player.name)}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => setMedals(Array.isArray(data) ? data : null))
+      .catch(() => setMedals(null));
+  }, [player]);
+
   if (!mounted) return null;
   if (!player || editMode) return <PlayerSetup onDone={() => setEditMode(false)} />;
 
@@ -112,12 +123,6 @@ export default function ProfilePage() {
     : null;
   const favGame = GAMES.map((g) => ({ g, pts: getPointsForGame(g.id) }))
     .sort((a, b) => b.pts - a.pts)[0];
-
-  // Top 5 meilleurs chrono (par niveau)
-  const topTimes = [...completedLevels]
-    .filter((c) => c.bestMs)
-    .sort((a, b) => (a.bestMs ?? 0) - (b.bestMs ?? 0))
-    .slice(0, 5);
 
   const joinDate = new Date(player.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
   const color = avatarColor(player.name);
@@ -261,37 +266,75 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* ── Meilleurs chronos ─────────────────────────────────────── */}
-      {topTimes.length > 0 && (
-        <div>
-          <div className="section-label" style={{ marginBottom: '12px' }}>Meilleures performances</div>
+      {/* ── Médailles classement ──────────────────────────────────── */}
+      <div>
+        <div className="section-label" style={{ marginBottom: '12px' }}>Médailles</div>
+
+        {/* Compteur */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px',
+          marginBottom: medals && medals.length > 0 ? '12px' : 0,
+        }}>
+          {([
+            { rank: 1, emoji: '🥇', label: 'Or',      color: '#FFD700' },
+            { rank: 2, emoji: '🥈', label: 'Argent',  color: '#C0C0C0' },
+            { rank: 3, emoji: '🥉', label: 'Bronze',  color: '#CD7F32' },
+          ] as const).map(({ rank, emoji, label, color }) => {
+            const count = medals ? medals.filter((m) => m.rank === rank).length : null;
+            return (
+              <div key={rank} style={{
+                background: count ? `${color}12` : 'var(--bg-card)',
+                border: `1px solid ${count ? color + '44' : 'var(--border-color)'}`,
+                borderRadius: '16px', padding: '14px 10px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+              }}>
+                <div style={{ fontSize: '28px', lineHeight: 1 }}>{emoji}</div>
+                <div style={{ fontSize: '26px', fontWeight: 900, color: count ? color : 'var(--text-muted)', lineHeight: 1 }}>
+                  {medals === null ? '…' : count}
+                </div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>
+                  {label}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Détail des médailles */}
+        {medals && medals.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
-            {topTimes.map((c, i) => {
-              const game = GAMES.find((g) => g.id === c.gameId);
-              const medals = ['🥇', '🥈', '🥉', '4.', '5.'];
+            {medals.map((m) => {
+              const game = GAMES.find((g) => g.id === m.gameId);
+              const medalEmoji = m.rank === 1 ? '🥇' : m.rank === 2 ? '🥈' : '🥉';
               return (
-                <div key={`${c.gameId}-${c.level}`} style={{
+                <div key={`${m.gameId}-${m.level}`} style={{
                   display: 'flex', alignItems: 'center', gap: '12px',
                   background: 'var(--bg-card)', border: '1px solid var(--border-color)',
                   borderRadius: '12px', padding: '10px 14px',
                 }}>
-                  <div style={{ fontSize: '16px', minWidth: '24px', textAlign: 'center' }}>{medals[i]}</div>
+                  <div style={{ fontSize: '18px', minWidth: '24px', textAlign: 'center' }}>{medalEmoji}</div>
                   <div style={{ fontSize: '18px' }}>{game?.emoji}</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
                       {game?.title}
                     </div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Niveau {c.level}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Niveau {m.level}</div>
                   </div>
                   <div style={{ fontFamily: 'monospace', fontWeight: 900, fontSize: '15px', color: 'var(--rasta-gold)' }}>
-                    {fmt(c.bestMs ?? 0)}
+                    {fmt(m.fastestMs)}
                   </div>
                 </div>
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+
+        {medals !== null && medals.length === 0 && (
+          <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', padding: '20px 0' }}>
+            Pas encore de médaille — grimpe sur le podium ! 🏆
+          </div>
+        )}
+      </div>
     </div>
   );
 }

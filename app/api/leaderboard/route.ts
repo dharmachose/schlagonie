@@ -3,6 +3,7 @@ import {
   getGlobalLeaderboard,
   getGameLeaderboard,
   getSpeedLeaderboard,
+  getPlayerMedals,
 } from '@/lib/leaderboard';
 import type { GameId, DifficultyLevel } from '@/lib/types';
 
@@ -29,6 +30,14 @@ export async function GET(req: NextRequest) {
       const entries = await getSpeedLeaderboard(gameId, Number(level) as DifficultyLevel);
       if (entries === null) return NextResponse.json({ error: 'no_redis' }, { status: 503 });
       return NextResponse.json(entries);
+    }
+
+    if (type === 'medals') {
+      const player = searchParams.get('player');
+      if (!player) return NextResponse.json({ error: 'Missing player' }, { status: 400 });
+      const medals = await getPlayerMedals(player);
+      if (medals === null) return NextResponse.json({ error: 'no_db' }, { status: 503 });
+      return NextResponse.json(medals);
     }
 
     return NextResponse.json({ error: 'Invalid params' }, { status: 400 });
