@@ -50,6 +50,13 @@ export const GAMES: GameMeta[] = [
     description: "Réponds aux clients sans faire de faute ! Orthographe, grammaire, chiffres plausibles... Décrochez !",
     available: true,
   },
+  {
+    id: 'slots',
+    title: 'La Roulette Vosgienne',
+    emoji: '🎰',
+    description: "Arrête les rouleaux au bon moment et accumule assez de pièces pour battre la Roulette Vosgienne !",
+    available: true,
+  },
 ];
 
 export const LEVEL_LABELS: Record<number, string> = {
