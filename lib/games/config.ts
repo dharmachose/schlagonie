@@ -52,9 +52,9 @@ export const GAMES: GameMeta[] = [
   },
   {
     id: 'slots',
-    title: 'Dealer des Vosges',
-    emoji: '🃏',
-    description: "Arrête les rouleaux au bon moment et accumule assez de pièces pour battre le Dealer des Vosges !",
+    title: 'La Roulette Vosgienne',
+    emoji: '🎰',
+    description: "Arrête les rouleaux au bon moment et accumule assez de pièces pour battre la Roulette Vosgienne !",
     available: true,
   },
 ];

@@ -257,7 +257,7 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
             boxShadow: '0 4px 15px rgba(34,139,34,0.3)',
           }}
         >
-          🃏 TIRER LE BRAS
+          🎰 TIRER LE BRAS
         </button>
       )}
 

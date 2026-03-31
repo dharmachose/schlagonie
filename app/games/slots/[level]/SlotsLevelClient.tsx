@@ -6,7 +6,7 @@ import type { DifficultyLevel } from '@/lib/types';
 
 export default function SlotsLevelClient({ level }: { level: DifficultyLevel }) {
   return (
-    <GameShell gameId="slots" gameTitle="Dealer des Vosges" gameEmoji="🃏" level={level}>
+    <GameShell gameId="slots" gameTitle="La Roulette Vosgienne" gameEmoji="🎰" level={level}>
       {({ onLevelComplete, onGameOver }) => (
         <SlotsGame level={level} onLevelComplete={onLevelComplete} onGameOver={onGameOver} />
       )}

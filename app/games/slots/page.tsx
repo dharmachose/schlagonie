@@ -17,10 +17,10 @@ export default function SlotsPage() {
         marginBottom: '8px',
         letterSpacing: '-0.5px',
       }}>
-        🃏 Dealer des Vosges
+        🎰 La Roulette Vosgienne
       </h1>
       <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '24px', lineHeight: 1.5 }}>
-        Arrête les rouleaux au bon moment et accumule assez de pièces pour battre le Dealer !
+        Arrête les rouleaux au bon moment et accumule assez de pièces pour battre la Roulette Vosgienne !
       </p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
