@@ -50,6 +50,13 @@ export const GAMES: GameMeta[] = [
     description: "Réponds aux clients sans faire de faute ! Orthographe, grammaire, chiffres plausibles... Décrochez !",
     available: true,
   },
+  {
+    id: 'slots',
+    title: 'Dealer des Vosges',
+    emoji: '🃏',
+    description: "Arrête les rouleaux au bon moment et accumule assez de pièces pour battre le Dealer des Vosges !",
+    available: true,
+  },
 ];
 
 export const LEVEL_LABELS: Record<number, string> = {
