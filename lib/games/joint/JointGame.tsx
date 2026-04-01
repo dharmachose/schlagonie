@@ -136,14 +136,16 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
 
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
+  // Empêche les événements mousedown/mouseup synthétiques (mobile) d'interférer
+  const wasTouchRef = useRef(false);
 
   const startHold = useCallback(() => {
     if (phase !== 'active') return;
-    if (holdStartRef.current !== null) return; // already started by touch
+    if (holdStartRef.current !== null) return;
     const step = STEPS[stepIdx];
     if (step.action !== 'hold') return;
     holdStartRef.current = Date.now();
-    const target = step.target ?? 1400;
+    const target = step.target ?? 1000;
     const animate = () => {
       if (holdStartRef.current === null) return;
       const progress = Math.min(((Date.now() - holdStartRef.current) / target) * 100, 100);
@@ -165,6 +167,7 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
   }, []);
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    wasTouchRef.current = true;
     if (phase !== 'active') return;
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
@@ -176,6 +179,9 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
   }, [phase, stepIdx, startHold]);
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    // Réinitialise le flag touch après que les événements synthétiques soient passés
+    setTimeout(() => { wasTouchRef.current = false; }, 600);
+
     if (phase !== 'active') return;
     const step = STEPS[stepIdx];
 
@@ -208,7 +214,6 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
     if (detected === step.action) {
       completeStep();
     } else if (detected !== null) {
-      // Amélioration 3 — mauvaise direction : flash rouge + vibration
       setPhase('error');
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
         navigator.vibrate(80);
@@ -218,6 +223,7 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
   }, [phase, stepIdx, tapCount, completeStep, cancelHold]);
 
   const handleClick = useCallback(() => {
+    if (wasTouchRef.current) return; // ignore synthetic click from touch
     if (phase !== 'active') return;
     const step = STEPS[stepIdx];
     if (step.action === 'tap') { completeStep(); return; }
@@ -339,16 +345,18 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
           overflow: 'hidden',
           touchAction: 'none',
           cursor: 'pointer',
+          WebkitTouchCallout: 'none',
           transition: 'border-color 0.15s, background 0.15s',
           // Amélioration 3 — shake sur erreur
           animation: phase === 'error' ? 'joint-shake 0.3s ease-out' : undefined,
         }}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        onTouchCancel={cancelHold}
-        onMouseDown={startHold}
-        onMouseUp={cancelHold}
-        onMouseLeave={cancelHold}
+        onTouchCancel={handleTouchEnd}
+        onMouseDown={() => { if (!wasTouchRef.current) startHold(); }}
+        onMouseUp={() => { if (!wasTouchRef.current) cancelHold(); }}
+        onMouseLeave={() => { if (!wasTouchRef.current) cancelHold(); }}
+        onContextMenu={(e) => e.preventDefault()}
         onClick={handleClick}
       >
         {/* Amélioration 2 — arc countdown (top-left) */}
