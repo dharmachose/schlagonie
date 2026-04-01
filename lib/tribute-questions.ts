@@ -51,6 +51,13 @@ const TRIBUTE_QUESTIONS: TributeQuestion[] = [
   { id: 'q-tower-4', gameId: 'tower', level: 4, text: 'Un message secret pour Léonie 🤫', placeholder: 'Psssst Léonie...' },
   { id: 'q-tower-5', gameId: 'tower', level: 5, text: 'Si tu organisais une fête pour Léonie, ça ressemblerait à quoi ? 🎉', placeholder: 'Il y aurait...' },
 
+  // ── Roulette Vosgienne 🎰 ─────────────────────────────────────────────────
+  { id: 'q-slots-1', gameId: 'slots', level: 1, text: 'Si Léonie était un symbole de la machine à sous, ce serait lequel ? 🎰', placeholder: 'Clairement le...' },
+  { id: 'q-slots-2', gameId: 'slots', level: 2, text: 'Ce sur quoi Léonie mise dans la vie 🍀', placeholder: 'Elle mise sur...' },
+  { id: 'q-slots-3', gameId: 'slots', level: 3, text: 'Un jackpot que tu souhaites à Léonie dans sa vie ✨', placeholder: 'J\'espère qu\'elle gagne...' },
+  { id: 'q-slots-4', gameId: 'slots', level: 4, text: 'Le truc le plus fou que Léonie ferait si elle gagnait au casino 🤑', placeholder: 'Elle serait capable de...' },
+  { id: 'q-slots-5', gameId: 'slots', level: 5, text: 'Léonie face à l\'adversité : elle fait quoi ? 🎲', placeholder: 'Quand ça coince, elle...' },
+
   // ── Allo 📞 ────────────────────────────────────────────────────────────────
   { id: 'q-allo-1', gameId: 'allo', level: 1, text: 'La première chose qui te vient en tête quand tu penses à Léonie 💭', placeholder: 'Aussitôt je pense à...' },
   { id: 'q-allo-2', gameId: 'allo', level: 2, text: 'Un truc que Léonie dit tout le temps 🔁', placeholder: 'Elle dit souvent...' },
