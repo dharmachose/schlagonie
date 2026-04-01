@@ -373,7 +373,14 @@ export default function ProfilePage() {
                 }}
               >Annuler</button>
               <button
-                onClick={() => {
+                onClick={async () => {
+                  if (player) {
+                    await fetch('/api/scores', {
+                      method: 'DELETE',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ playerName: player.name }),
+                    }).catch(() => {});
+                  }
                   localStorage.removeItem('shlagonie-store');
                   window.location.reload();
                 }}
