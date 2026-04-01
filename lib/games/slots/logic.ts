@@ -37,6 +37,19 @@ export function getReelSymbols(level: DifficultyLevel): string[] {
   return ALL_SYMBOLS.slice(0, LEVEL_CONFIG[level].symbolCount);
 }
 
+// Near-miss : 2 symboles d'une même famille mais pas le 3e (résultat = 0 pièces)
+export function calcNearMiss(line: [string, string, string]): { symbol: string; label: string } | null {
+  if (calcPayout(line).coins > 0) return null;
+  for (const [, syms] of Object.entries(SYMBOL_FAMILIES)) {
+    const inFamily = line.filter((x) => (syms as readonly string[]).includes(x));
+    if (inFamily.length === 2) {
+      const missing = (syms as readonly string[]).find((s) => !line.includes(s)) ?? syms[0];
+      return { symbol: missing, label: `Presque ! Il manquait ${missing}` };
+    }
+  }
+  return null;
+}
+
 export function calcPayout(line: [string, string, string]): { coins: number; label: string } {
   const [a, b, c] = line;
 
