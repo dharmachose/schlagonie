@@ -45,6 +45,8 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
   const intervalIds    = useRef<[id | null, id | null, id | null]>([null, null, null]);
   const autoIntervalRef = useRef<id | null>(null);
   const stopReelRef    = useRef<(i: 0 | 1 | 2) => void>(() => {});
+  // Garde contre les appels multiples à stopReel pendant la décélération
+  const stoppingRef    = useRef<[boolean, boolean, boolean]>([false, false, false]);
 
   type id = ReturnType<typeof setInterval>;
 
@@ -72,7 +74,8 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
     const timers: [number, number, number] = [AUTO_STOP_MS, AUTO_STOP_MS, AUTO_STOP_MS];
     autoIntervalRef.current = setInterval(() => {
       for (let i = 0; i < 3; i++) {
-        if (spinningRef.current[i as 0 | 1 | 2]) {
+        // Ne décompter que si le rouleau tourne ET n'est pas déjà en train de s'arrêter
+        if (spinningRef.current[i as 0 | 1 | 2] && !stoppingRef.current[i as 0 | 1 | 2]) {
           timers[i as 0 | 1 | 2] -= AUTO_TICK_MS;
           if (timers[i as 0 | 1 | 2] <= 0) { timers[i as 0 | 1 | 2] = 0; stopReelRef.current(i as 0 | 1 | 2); }
         }
@@ -100,6 +103,8 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
 
   // ── Résolution ────────────────────────────────────────────────────────────
   function resolveResult() {
+    // Garde : ne s'exécute qu'une seule fois par spin
+    if (phaseRef.current !== 'spinning') return;
     const line   = reelIdxRef.current.map((i) => symbols[i]) as [string, string, string];
     const result = calcPayout(line);
 
@@ -142,7 +147,9 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
 
   // ── Arrêt rouleau avec décélération ──────────────────────────────────────
   function stopReel(i: 0 | 1 | 2) {
-    if (!spinningRef.current[i]) return;
+    // Double garde : rouleau doit tourner ET ne pas être déjà en décélération
+    if (!spinningRef.current[i] || stoppingRef.current[i]) return;
+    stoppingRef.current[i] = true; // verrouillage immédiat
     clearInterval(intervalIds.current[i]!);
     intervalIds.current[i] = null;
     haptic(30); // buzz tactile à chaque arrêt
@@ -173,6 +180,7 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
     const isLast      = spinsLeftRef.current === 1 && coinsRef.current < cfg.target;
     const effectiveTick = isLast ? Math.max(cfg.tickMs, 120) : cfg.tickMs;
 
+    stoppingRef.current = [false, false, false]; // réinitialise les gardes pour le nouveau spin
     const toSpin: [boolean, boolean, boolean] = [!held[0], !held[1], !held[2]];
     spinningRef.current = [...toSpin] as [boolean, boolean, boolean];
     setHeld([false, false, false]);
