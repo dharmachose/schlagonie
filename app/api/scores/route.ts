@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { submitScore } from '@/lib/leaderboard';
+import { neon } from '@neondatabase/serverless';
 import type { LevelCompletion } from '@/lib/types';
 
 export async function POST(req: NextRequest) {
@@ -16,6 +17,22 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ ok: true });
+  } catch {
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { playerName } = await req.json();
+    if (!playerName) return NextResponse.json({ error: 'Missing playerName' }, { status: 400 });
+
+    const url = process.env.DATABASE_URL;
+    if (!url) return NextResponse.json({ deleted: 0 });
+
+    const sql = neon(url);
+    const result = await sql`DELETE FROM scores WHERE player_name = ${playerName} RETURNING id`;
+    return NextResponse.json({ deleted: result.length });
   } catch {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }

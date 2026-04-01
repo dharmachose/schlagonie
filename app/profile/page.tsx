@@ -93,6 +93,7 @@ export default function ProfilePage() {
   const [mounted, setMounted] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [medals, setMedals] = useState<PlayerMedal[] | null>(null);
+  const [confirmReset, setConfirmReset] = useState(false);
 
   useEffect(() => setMounted(true), []);
 
@@ -332,6 +333,65 @@ export default function ProfilePage() {
         {medals !== null && medals.length === 0 && (
           <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', padding: '20px 0' }}>
             Pas encore de médaille — grimpe sur le podium ! 🏆
+          </div>
+        )}
+      </div>
+
+      {/* ── Réinitialisation ─────────────────────────────────────────── */}
+      <div style={{ marginTop: '32px', textAlign: 'center' }}>
+        {!confirmReset ? (
+          <button
+            onClick={() => setConfirmReset(true)}
+            style={{
+              background: 'none', border: 'none',
+              fontSize: '11px', color: 'var(--text-muted)',
+              cursor: 'pointer', opacity: 0.5,
+              WebkitTapHighlightColor: 'transparent',
+              padding: '4px 8px',
+            }}
+          >Réinitialiser ma progression</button>
+        ) : (
+          <div style={{
+            background: 'var(--bg-card)',
+            border: '1px solid rgba(220,20,60,0.3)',
+            borderRadius: '14px', padding: '16px',
+          }}>
+            <div style={{ fontSize: '13px', color: 'var(--text-primary)', marginBottom: '12px', fontWeight: 600 }}>
+              Effacer toute ta progression locale ?
+            </div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '14px' }}>
+              Niveaux complétés, points et succès seront perdus.
+            </div>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+              <button
+                onClick={() => setConfirmReset(false)}
+                style={{
+                  padding: '8px 18px', borderRadius: '10px',
+                  background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)',
+                  color: 'var(--text-muted)', fontSize: '13px', fontWeight: 600,
+                  cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                }}
+              >Annuler</button>
+              <button
+                onClick={async () => {
+                  if (player) {
+                    await fetch('/api/scores', {
+                      method: 'DELETE',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ playerName: player.name }),
+                    }).catch(() => {});
+                  }
+                  localStorage.removeItem('shlagonie-store');
+                  window.location.reload();
+                }}
+                style={{
+                  padding: '8px 18px', borderRadius: '10px',
+                  background: 'rgba(220,20,60,0.15)', border: '1px solid rgba(220,20,60,0.4)',
+                  color: '#DC143C', fontSize: '13px', fontWeight: 700,
+                  cursor: 'pointer', WebkitTapHighlightColor: 'transparent',
+                }}
+              >Oui, tout effacer</button>
+            </div>
           </div>
         )}
       </div>

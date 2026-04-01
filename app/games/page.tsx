@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useStore } from '@/lib/store';
 import { GAMES, LEVEL_LABELS } from '@/lib/games/config';
+import PlayerSetup from '@/components/PlayerSetup';
 import type { DifficultyLevel } from '@/lib/types';
 
 // Cannabis leaf SVG — 7 folioles pointues, tige courte, hub en bas
@@ -47,6 +48,9 @@ export default function GamesPage() {
   const { player, isLevelCompleted, getBestTime } = useStore();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  if (!mounted) return null;
+  if (!player) return <PlayerSetup onDone={() => {}} />;
 
   const formatTime = (ms: number) => {
     const s = Math.floor(ms / 1000);
