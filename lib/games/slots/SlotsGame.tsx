@@ -5,12 +5,11 @@ import type { GameProps } from '@/lib/types';
 import { LEVEL_CONFIG, getReelSymbols, calcPayout, calcNearMiss, SYMBOL_FAMILIES } from './logic';
 
 const AUTO_STOP_MS = 3000;
-const DECEL_STEPS  = 3;
-const AUTO_TICK_MS = 50;
+const AUTO_TICK_MS = 50; // résolution de la barre visuelle uniquement
 
 type Phase = 'idle' | 'spinning' | 'result';
+type id    = ReturnType<typeof setInterval>;
 
-// ── Vibration helper (silencieux si non supporté / iOS) ───────────────────────
 function haptic(pattern: number | number[]) {
   try { navigator.vibrate?.(pattern); } catch { /* noop */ }
 }
@@ -31,59 +30,33 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
   const [spinsLeft,  setSpinsLeft]  = useState(cfg.maxSpins);
   const [lastResult, setLastResult] = useState<{ coins: number; label: string } | null>(null);
   const [autoTimers, setAutoTimers] = useState<[number, number, number]>([AUTO_STOP_MS, AUTO_STOP_MS, AUTO_STOP_MS]);
-  const [streak,     setStreak]     = useState(0);       // gains consécutifs
+  const [streak,     setStreak]     = useState(0);
   const [nearMiss,   setNearMiss]   = useState<{ symbol: string; label: string } | null>(null);
 
-  // ── Refs ──────────────────────────────────────────────────────────────────
-  const startRef       = useRef(Date.now());
-  const reelIdxRef     = useRef<[number, number, number]>([0, 1, 2]);
-  const spinningRef    = useRef<[boolean, boolean, boolean]>([false, false, false]);
-  const coinsRef       = useRef(0);
-  const spinsLeftRef   = useRef(cfg.maxSpins);
-  const streakRef      = useRef(0);
-  const phaseRef       = useRef<Phase>('idle');
-  const intervalIds    = useRef<[id | null, id | null, id | null]>([null, null, null]);
-  const autoIntervalRef = useRef<id | null>(null);
-  const stopReelRef    = useRef<(i: 0 | 1 | 2) => void>(() => {});
+  // ── Refs logique ──────────────────────────────────────────────────────────
+  const startRef      = useRef(Date.now());
+  const reelIdxRef    = useRef<[number, number, number]>([0, 1, 2]);
+  const spinningRef   = useRef<[boolean, boolean, boolean]>([false, false, false]);
+  const coinsRef      = useRef(0);
+  const spinsLeftRef  = useRef(cfg.maxSpins);
+  const streakRef     = useRef(0);
+  const phaseRef      = useRef<Phase>('idle');
 
-  type id = ReturnType<typeof setInterval>;
+  // Intervalles de tick par rouleau (avance les symboles)
+  const tickIds       = useRef<[id | null, id | null, id | null]>([null, null, null]);
+  // Timeouts auto-stop (UN SEUL PAR ROULEAU — tire une seule fois)
+  const autoStopIds   = useRef<[id | null, id | null, id | null]>([null, null, null]);
+  // Intervalle purement visuel pour la barre de compte à rebours
+  const visualTimerId = useRef<id | null>(null);
 
-  // ── Dérivés ───────────────────────────────────────────────────────────────
-  const multiplier   = streakRef.current >= 3 ? 2 : streakRef.current >= 2 ? 1.5 : 1;
-  const isLastSpin   = spinsLeft === 1 && coins < cfg.target;
-  const progress     = Math.min(coins / cfg.target, 1);
-  const isJackpot    = (lastResult?.coins ?? 0) >= 30;
-
-  const availableFamilies = Object.entries(SYMBOL_FAMILIES)
-    .filter(([, syms]) => syms.every((s) => symbols.includes(s)));
-
-  // ── Cleanup ───────────────────────────────────────────────────────────────
+  // ── Cleanup total ─────────────────────────────────────────────────────────
   useEffect(() => () => {
-    intervalIds.current.forEach((id) => id && clearInterval(id));
-    if (autoIntervalRef.current) clearInterval(autoIntervalRef.current);
+    tickIds.current.forEach((id)     => id && clearInterval(id));
+    autoStopIds.current.forEach((id) => id && clearTimeout(id));
+    if (visualTimerId.current) clearInterval(visualTimerId.current);
   }, []);
 
-  // ── Timer auto-stop ───────────────────────────────────────────────────────
-  useEffect(() => {
-    if (phase !== 'spinning') {
-      if (autoIntervalRef.current) { clearInterval(autoIntervalRef.current); autoIntervalRef.current = null; }
-      return;
-    }
-    const timers: [number, number, number] = [AUTO_STOP_MS, AUTO_STOP_MS, AUTO_STOP_MS];
-    autoIntervalRef.current = setInterval(() => {
-      for (let i = 0; i < 3; i++) {
-        if (spinningRef.current[i as 0 | 1 | 2]) {
-          timers[i as 0 | 1 | 2] -= AUTO_TICK_MS;
-          if (timers[i as 0 | 1 | 2] <= 0) { timers[i as 0 | 1 | 2] = 0; stopReelRef.current(i as 0 | 1 | 2); }
-        }
-      }
-      setAutoTimers([...timers] as [number, number, number]);
-    }, AUTO_TICK_MS);
-    return () => { if (autoIntervalRef.current) clearInterval(autoIntervalRef.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase]);
-
-  // ── Tick rouleau ──────────────────────────────────────────────────────────
+  // ── Avance un rouleau ─────────────────────────────────────────────────────
   function advanceReel(i: 0 | 1 | 2) {
     setReelIdx((prev) => {
       const next = [...prev] as [number, number, number];
@@ -98,99 +71,117 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
     });
   }
 
-  // ── Résolution ────────────────────────────────────────────────────────────
+  // ── Résolution (une seule fois par spin, gardée par phaseRef) ─────────────
   function resolveResult() {
-    const line   = reelIdxRef.current.map((i) => symbols[i]) as [string, string, string];
+    if (phaseRef.current !== 'spinning') return;
+    phaseRef.current = 'result'; // verrouillage immédiat
+
+    const line = reelIdxRef.current.map((i) => symbols[i]) as [string, string, string];
     const result = calcPayout(line);
 
-    // Multiplicateur de série
-    const mult          = streakRef.current >= 3 ? 2 : streakRef.current >= 2 ? 1.5 : 1;
+    const mult           = streakRef.current >= 3 ? 2 : streakRef.current >= 2 ? 1.5 : 1;
     const effectiveCoins = result.coins > 0 ? Math.round(result.coins * mult) : 0;
-    const label         = mult > 1 && result.coins > 0
-      ? `${result.label} ×${mult}`
-      : result.label;
+    const label          = mult > 1 && result.coins > 0 ? `${result.label} ×${mult}` : result.label;
 
-    // Mise à jour streak
     const newStreak = effectiveCoins > 0 ? streakRef.current + 1 : 0;
     streakRef.current = newStreak;
     setStreak(newStreak);
 
-    // Near-miss (seulement si 0 pièces)
     const miss = effectiveCoins === 0 ? calcNearMiss(line) : null;
     setNearMiss(miss);
 
-    // Haptique
-    if (effectiveCoins >= 30)     haptic([100, 50, 100, 50, 200]);
+    if      (effectiveCoins >= 30) haptic([100, 50, 100, 50, 200]);
     else if (effectiveCoins >= 20) haptic([80, 40, 80]);
     else if (effectiveCoins >= 8)  haptic(80);
-    else if (miss)                 haptic([20, 30, 20]); // near-miss buzz
+    else if (miss)                 haptic([20, 30, 20]);
     else                           haptic(15);
 
     const newCoins = coinsRef.current + effectiveCoins;
     const newSpins = spinsLeftRef.current - 1;
-    coinsRef.current   = newCoins;
-    spinsLeftRef.current = newSpins;
+    coinsRef.current      = newCoins;
+    spinsLeftRef.current  = newSpins;
     setCoins(newCoins);
     setSpinsLeft(newSpins);
     setLastResult({ coins: effectiveCoins, label });
-    phaseRef.current = 'result';
     setPhase('result');
 
-    if (newCoins >= cfg.target)    setTimeout(() => onLevelComplete(Date.now() - startRef.current), 700);
-    else if (newSpins <= 0)        setTimeout(() => onGameOver(), 1200);
+    if (newCoins >= cfg.target)  setTimeout(() => onLevelComplete(Date.now() - startRef.current), 700);
+    else if (newSpins <= 0)      setTimeout(() => onGameOver(), 1200);
   }
 
-  // ── Arrêt rouleau avec décélération ──────────────────────────────────────
+  // ── Arrêt d'un rouleau ────────────────────────────────────────────────────
   function stopReel(i: 0 | 1 | 2) {
     if (!spinningRef.current[i]) return;
-    clearInterval(intervalIds.current[i]!);
-    intervalIds.current[i] = null;
-    haptic(30); // buzz tactile à chaque arrêt
 
-    let delay = cfg.tickMs * 1.6;
-    function decelTick(stepsLeft: number) {
-      advanceReel(i);
-      if (stepsLeft <= 1) {
-        const ns = [...spinningRef.current] as [boolean, boolean, boolean];
-        ns[i] = false;
-        spinningRef.current = ns;
-        setSpinning([...ns] as [boolean, boolean, boolean]);
-        if (!ns.some((s) => s)) resolveResult();
-      } else {
-        delay *= 2.2;
-        setTimeout(() => decelTick(stepsLeft - 1), delay);
-      }
+    // Annuler le timeout auto-stop pour ce rouleau (s'il n'a pas déjà tiré)
+    if (autoStopIds.current[i]) { clearTimeout(autoStopIds.current[i]!); autoStopIds.current[i] = null; }
+    // Arrêter le ticker
+    if (tickIds.current[i])     { clearInterval(tickIds.current[i]!);    tickIds.current[i]     = null; }
+
+    haptic(30);
+    spinningRef.current[i] = false;
+
+    const ns: [boolean, boolean, boolean] = [...spinningRef.current] as [boolean, boolean, boolean];
+    setSpinning(ns);
+
+    // Si tous arrêtés → résoudre
+    if (!ns.some((s) => s)) {
+      // Arrêter aussi la barre visuelle
+      if (visualTimerId.current) { clearInterval(visualTimerId.current); visualTimerId.current = null; }
+      resolveResult();
     }
-    setTimeout(() => decelTick(DECEL_STEPS), delay);
   }
-  stopReelRef.current = stopReel;
 
   // ── Lancer un spin ────────────────────────────────────────────────────────
   function startSpin() {
     if (phaseRef.current === 'spinning') return;
 
-    // Dernier Bras : ralentir tous les rouleaux au minimum
-    const isLast      = spinsLeftRef.current === 1 && coinsRef.current < cfg.target;
-    const effectiveTick = isLast ? Math.max(cfg.tickMs, 120) : cfg.tickMs;
-
+    const isLast         = spinsLeftRef.current === 1 && coinsRef.current < cfg.target;
+    const effectiveTick  = isLast ? Math.max(cfg.tickMs, 120) : cfg.tickMs;
     const toSpin: [boolean, boolean, boolean] = [!held[0], !held[1], !held[2]];
+
+    // Reset complet
     spinningRef.current = [...toSpin] as [boolean, boolean, boolean];
+    phaseRef.current    = 'spinning';
+
     setHeld([false, false, false]);
     setSpinning(toSpin);
     setLastResult(null);
     setNearMiss(null);
     setAutoTimers([AUTO_STOP_MS, AUTO_STOP_MS, AUTO_STOP_MS]);
-    phaseRef.current = 'spinning';
     setPhase('spinning');
 
+    if (!toSpin.some((s) => s)) {
+      // Tous les rouleaux étaient en hold → résolution immédiate
+      spinningRef.current = [false, false, false];
+      resolveResult();
+      return;
+    }
+
+    // Démarrer les tickers et les timeouts auto-stop pour chaque rouleau actif
     toSpin.forEach((shouldSpin, i) => {
       if (!shouldSpin) return;
-      intervalIds.current[i as 0 | 1 | 2] = setInterval(
-        () => advanceReel(i as 0 | 1 | 2),
-        effectiveTick,
-      );
+      const ri = i as 0 | 1 | 2;
+
+      tickIds.current[ri]     = setInterval(() => advanceReel(ri), effectiveTick);
+      // setTimeout UNE SEULE FOIS → aucun risque de ré-exécution
+      autoStopIds.current[ri] = setTimeout(() => stopReel(ri), AUTO_STOP_MS) as unknown as id;
     });
-    if (!toSpin.some((s) => s)) { spinningRef.current = [false, false, false]; resolveResult(); }
+
+    // Barre visuelle : un seul intervalle qui décrémente et affiche
+    const elapsed = [0, 0, 0];
+    visualTimerId.current = setInterval(() => {
+      const next: [number, number, number] = [
+        toSpin[0] ? Math.max(0, AUTO_STOP_MS - (elapsed[0] += AUTO_TICK_MS)) : 0,
+        toSpin[1] ? Math.max(0, AUTO_STOP_MS - (elapsed[1] += AUTO_TICK_MS)) : 0,
+        toSpin[2] ? Math.max(0, AUTO_STOP_MS - (elapsed[2] += AUTO_TICK_MS)) : 0,
+      ];
+      // Geler les barres des rouleaux déjà arrêtés
+      if (!spinningRef.current[0]) next[0] = autoTimers[0];
+      if (!spinningRef.current[1]) next[1] = autoTimers[1];
+      if (!spinningRef.current[2]) next[2] = autoTimers[2];
+      setAutoTimers(next);
+    }, AUTO_TICK_MS) as unknown as id;
   }
 
   function toggleHold(i: 0 | 1 | 2) {
@@ -198,7 +189,13 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
     setHeld((prev) => { const next = [...prev] as [boolean, boolean, boolean]; next[i] = !next[i]; return next; });
   }
 
-  // ── Rendu ─────────────────────────────────────────────────────────────────
+  // ── Dérivés UI ────────────────────────────────────────────────────────────
+  const isLastSpin        = spinsLeft === 1 && coins < cfg.target;
+  const progress          = Math.min(coins / cfg.target, 1);
+  const isJackpot         = (lastResult?.coins ?? 0) >= 30;
+  const availableFamilies = Object.entries(SYMBOL_FAMILIES)
+    .filter(([, syms]) => syms.every((s) => symbols.includes(s)));
+
   return (
     <div style={{ padding: '16px 12px', maxWidth: '400px', margin: '0 auto', userSelect: 'none' }}>
 
@@ -218,7 +215,6 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
             🪙 {coins}
             <span style={{ fontSize: '13px', fontWeight: 400, color: 'var(--text-muted)' }}>/{cfg.target}</span>
           </div>
-          {/* Badge multiplicateur */}
           {streak >= 2 && (
             <div style={{
               fontSize: '12px', fontWeight: 800,
@@ -227,13 +223,10 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
               border: `1px solid ${streak >= 3 ? 'rgba(255,107,53,.4)' : 'rgba(255,215,0,.35)'}`,
               borderRadius: '6px', padding: '1px 6px',
               animation: 'streak-pop 0.4s ease',
-            }}>
-              ×{streak >= 3 ? '2' : '1.5'}
-            </div>
+            }}>×{streak >= 3 ? '2' : '1.5'}</div>
           )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Série */}
           {streak >= 2 && (
             <div style={{ fontSize: '12px', color: streak >= 3 ? '#FF6B35' : '#FFD700', fontWeight: 700 }}>
               🔥 ×{streak}
@@ -245,7 +238,7 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
         </div>
       </div>
 
-      {/* ── Barre progression ──────────────────────────────────────────────── */}
+      {/* ── Barre progression pièces ───────────────────────────────────────── */}
       <div style={{ height: '7px', background: 'var(--border-color)', borderRadius: '4px', overflow: 'hidden', marginBottom: '16px' }}>
         <div style={{ height: '100%', width: `${progress * 100}%`, background: 'linear-gradient(90deg, #228B22, #FFD700)', borderRadius: '4px', transition: 'width 0.45s ease' }} />
       </div>
@@ -254,13 +247,10 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
       <div style={{
         background: 'rgba(0,0,0,0.38)',
         border: `2px solid ${isJackpot ? 'rgba(255,215,0,.85)' : isLastSpin ? 'rgba(220,20,60,.7)' : 'rgba(255,215,0,.2)'}`,
-        borderRadius: '20px',
-        padding: '14px 10px',
-        marginBottom: '12px',
-        animation: isJackpot ? 'jackpot-pulse .7s ease 3' : isLastSpin && phase === 'idle' ? 'last-pulse 1s ease infinite' : 'none',
+        borderRadius: '20px', padding: '14px 10px', marginBottom: '12px',
+        animation: isJackpot ? 'jackpot-pulse .7s ease 3' : (isLastSpin && phase !== 'spinning') ? 'last-pulse 1s ease infinite' : 'none',
         transition: 'border-color 0.3s',
       }}>
-
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
           <div style={{ flex: 1, height: '1px', background: 'rgba(255,215,0,.15)' }} />
           <span style={{ fontSize: '9px', color: isLastSpin ? 'rgba(220,20,60,.7)' : 'rgba(255,215,0,.45)', fontWeight: 600, letterSpacing: '1px', transition: 'color .3s' }}>
@@ -281,7 +271,6 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
 
             return (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-
                 <button
                   onClick={() => isSpinning ? stopReel(i) : undefined}
                   style={{ width: '100%', padding: 0, background: 'none', border: 'none', cursor: isSpinning ? 'pointer' : 'default', WebkitTapHighlightColor: 'transparent', borderRadius: '12px', overflow: 'hidden' }}
@@ -317,14 +306,14 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
                   </div>
                 </button>
 
-                {/* Barre auto-stop */}
+                {/* Barre auto-stop (visuelle seulement) */}
                 <div style={{ width: '100%', height: '3px', background: isSpinning ? 'var(--border-color)' : 'transparent', borderRadius: '2px', overflow: 'hidden', transition: 'background .2s' }}>
                   {isSpinning && (
                     <div style={{ height: '100%', width: `${autoRatio * 100}%`, background: autoRatio > .55 ? '#32CD32' : autoRatio > .25 ? '#FFD700' : '#DC143C', borderRadius: '2px', transition: `width ${AUTO_TICK_MS}ms linear, background .3s` }} />
                   )}
                 </div>
 
-                {/* Bouton HOLD séparé */}
+                {/* Bouton HOLD */}
                 {phase === 'result' && (
                   <button
                     onClick={() => toggleHold(i)}
@@ -336,9 +325,7 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
                       fontSize: '10px', fontWeight: 700, letterSpacing: '.5px',
                       cursor: 'pointer', WebkitTapHighlightColor: 'transparent', transition: 'all .15s',
                     }}
-                  >
-                    {isHeld ? '🔒 HOLD' : 'HOLD'}
-                  </button>
+                  >{isHeld ? '🔒 HOLD' : 'HOLD'}</button>
                 )}
               </div>
             );
@@ -346,7 +333,7 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
         </div>
       </div>
 
-      {/* ── Messages résultat + near-miss ──────────────────────────────────── */}
+      {/* ── Messages résultat / near-miss ──────────────────────────────────── */}
       <div style={{ minHeight: '44px', textAlign: 'center', marginBottom: '10px' }}>
         {lastResult && lastResult.coins > 0 && (
           <div style={{ fontSize: '18px', fontWeight: 800, color: lastResult.coins >= 30 ? '#FFD700' : lastResult.coins >= 20 ? '#32CD32' : '#C0C0C0' }}>
@@ -356,26 +343,21 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
         {lastResult?.coins === 0 && phase === 'result' && !nearMiss && (
           <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Pas de gain cette fois…</div>
         )}
-        {/* Near-miss */}
         {nearMiss && phase === 'result' && (
           <div style={{ animation: 'near-miss-in .3s ease' }}>
             <div style={{ fontSize: '14px', fontWeight: 700, color: '#FFD700' }}>{nearMiss.label}</div>
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-              Arrête le bon rouleau au bon moment !
-            </div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Arrête le bon rouleau au bon moment !</div>
           </div>
         )}
       </div>
 
-      {/* ── Bouton spin / Dernier Bras ─────────────────────────────────────── */}
+      {/* ── Bouton TIRER LE BRAS / DERNIER BRAS ──────────────────────────────  */}
       {(phase === 'idle' || phase === 'result') && spinsLeft > 0 && coins < cfg.target && (
         <button
           onClick={startSpin}
           style={{
             width: '100%', padding: '16px',
-            background: isLastSpin
-              ? 'linear-gradient(135deg, #8B0000, #DC143C)'
-              : 'linear-gradient(135deg, #1a5c1a, #228B22)',
+            background: isLastSpin ? 'linear-gradient(135deg, #8B0000, #DC143C)' : 'linear-gradient(135deg, #1a5c1a, #228B22)',
             border: `1px solid ${isLastSpin ? 'rgba(220,20,60,.6)' : 'rgba(50,205,50,.4)'}`,
             borderRadius: '14px', color: 'white', fontSize: '18px', fontWeight: 900,
             cursor: 'pointer', letterSpacing: '.5px',
@@ -383,9 +365,7 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
             boxShadow: isLastSpin ? '0 4px 20px rgba(220,20,60,.4)' : '0 4px 15px rgba(34,139,34,.3)',
             transition: 'all .3s',
           }}
-        >
-          {isLastSpin ? '🎰 DERNIER BRAS !' : '🎰 TIRER LE BRAS'}
-        </button>
+        >{isLastSpin ? '🎰 DERNIER BRAS !' : '🎰 TIRER LE BRAS'}</button>
       )}
 
       {/* ── Table des gains ────────────────────────────────────────────────── */}
@@ -402,10 +382,5 @@ export default function SlotsGame({ level, onLevelComplete, onGameOver }: GamePr
 }
 
 function chip(color: string): React.CSSProperties {
-  return {
-    fontSize: '11px', color, fontWeight: 600,
-    background: 'rgba(255,255,255,.04)',
-    border: '1px solid rgba(255,255,255,.08)',
-    borderRadius: '8px', padding: '4px 8px',
-  };
+  return { fontSize: '11px', color, fontWeight: 600, background: 'rgba(255,255,255,.04)', border: '1px solid rgba(255,255,255,.08)', borderRadius: '8px', padding: '4px 8px' };
 }
