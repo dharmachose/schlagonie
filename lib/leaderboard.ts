@@ -114,7 +114,7 @@ export async function getAllTributes(): Promise<TributeRow[] | null> {
       questionId: r.question_id as string,
       question: r.question as string,
       answer: r.answer as string,
-      answeredAt: r.answered_at as number,
+      answeredAt: Number(r.answered_at),
     }));
   } catch (err) {
     console.error('[leaderboard] getAllTributes error', err);
