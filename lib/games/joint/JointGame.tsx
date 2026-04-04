@@ -134,10 +134,8 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
 
   completeStepRef.current = completeStep;
 
-  const touchStartX = useRef(0);
-  const touchStartY = useRef(0);
-  // Empêche les événements mousedown/mouseup synthétiques (mobile) d'interférer
-  const wasTouchRef = useRef(false);
+  const pointerStartX = useRef(0);
+  const pointerStartY = useRef(0);
 
   const startHold = useCallback(() => {
     if (phase !== 'active') return;
@@ -166,22 +164,18 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
     setHoldProgress(0);
   }, []);
 
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    wasTouchRef.current = true;
+  const handlePointerDown = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (phase !== 'active') return;
-    touchStartX.current = e.touches[0].clientX;
-    touchStartY.current = e.touches[0].clientY;
+    // setPointerCapture garantit que pointerup/cancel arrivent même si le doigt sort de l'élément
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* noop */ }
+    pointerStartX.current = e.clientX;
+    pointerStartY.current = e.clientY;
 
     const step = STEPS[stepIdx];
-    if (step.action === 'hold') {
-      startHold();
-    }
+    if (step.action === 'hold') startHold();
   }, [phase, stepIdx, startHold]);
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    // Réinitialise le flag touch après que les événements synthétiques soient passés
-    setTimeout(() => { wasTouchRef.current = false; }, 600);
-
+  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLDivElement>) => {
     if (phase !== 'active') return;
     const step = STEPS[stepIdx];
 
@@ -190,8 +184,8 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
       return;
     }
 
-    const dx = e.changedTouches[0].clientX - touchStartX.current;
-    const dy = e.changedTouches[0].clientY - touchStartY.current;
+    const dx = e.clientX - pointerStartX.current;
+    const dy = e.clientY - pointerStartY.current;
 
     if (step.action === 'tap') { completeStep(); return; }
     if (step.action === 'rapid-tap') {
@@ -215,24 +209,14 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
       completeStep();
     } else if (detected !== null) {
       setPhase('error');
-      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        navigator.vibrate(80);
-      }
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) navigator.vibrate(80);
       setTimeout(() => setPhase('active'), 300);
     }
   }, [phase, stepIdx, tapCount, completeStep, cancelHold]);
 
-  const handleClick = useCallback(() => {
-    if (wasTouchRef.current) return; // ignore synthetic click from touch
-    if (phase !== 'active') return;
-    const step = STEPS[stepIdx];
-    if (step.action === 'tap') { completeStep(); return; }
-    if (step.action === 'rapid-tap') {
-      const newCount = tapCount + 1;
-      setTapCount(newCount);
-      if (newCount >= (step.target ?? 8)) completeStep();
-    }
-  }, [phase, stepIdx, tapCount, completeStep]);
+  const handlePointerCancel = useCallback(() => {
+    cancelHold();
+  }, [cancelHold]);
 
   useEffect(() => () => {
     if (holdRafRef.current) cancelAnimationFrame(holdRafRef.current);
@@ -350,14 +334,10 @@ export default function JointGame({ level, onLevelComplete, onGameOver }: GamePr
           // Amélioration 3 — shake sur erreur
           animation: phase === 'error' ? 'joint-shake 0.3s ease-out' : undefined,
         }}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-        onTouchCancel={handleTouchEnd}
-        onMouseDown={() => { if (!wasTouchRef.current) startHold(); }}
-        onMouseUp={() => { if (!wasTouchRef.current) cancelHold(); }}
-        onMouseLeave={() => { if (!wasTouchRef.current) cancelHold(); }}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerCancel}
         onContextMenu={(e) => e.preventDefault()}
-        onClick={handleClick}
       >
         {/* Amélioration 2 — arc countdown (top-left) */}
         <div style={{ position: 'absolute', top: 8, left: 8, pointerEvents: 'none' }}>
