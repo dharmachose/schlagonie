@@ -9,10 +9,10 @@ export const GAMES: GameMeta[] = [
     available: true,
   },
   {
-    id: 'tetris',
-    title: 'Tetris Shlagonie',
-    emoji: '🪵',
-    description: 'Empile les sapins et les bûches pour battre le brouillard !',
+    id: 'joint',
+    title: 'Qui Roule Bamboule',
+    emoji: '🌿',
+    description: 'Roule le joint parfait le plus vite possible — weed, toncart, OCB, feu !',
     available: true,
   },
   {
@@ -27,13 +27,6 @@ export const GAMES: GameMeta[] = [
     title: 'Shlagonie Fuit !',
     emoji: '👑',
     description: "La reine Shlagonie fuit les fruits et légumes dans les ruelles d'Épinal !",
-    available: true,
-  },
-  {
-    id: 'joint',
-    title: 'Qui Roule Bamboule',
-    emoji: '🌿',
-    description: 'Roule le joint parfait le plus vite possible — weed, toncart, OCB, feu !',
     available: true,
   },
   {
@@ -55,6 +48,13 @@ export const GAMES: GameMeta[] = [
     title: 'La Roulette Vosgienne',
     emoji: '🎰',
     description: "Arrête les rouleaux au bon moment et accumule assez de pièces pour battre la Roulette Vosgienne !",
+    available: true,
+  },
+  {
+    id: 'tetris',
+    title: 'Tetris Shlagonie',
+    emoji: '🪵',
+    description: 'Empile les sapins et les bûches pour battre le brouillard !',
     available: true,
   },
 ];
