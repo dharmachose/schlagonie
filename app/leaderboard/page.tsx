@@ -14,7 +14,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 ];
 
 const RANK_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
-const PODIUM_HEIGHTS = [110, 80, 60];
+const PODIUM_HEIGHTS = [80, 110, 60]; // [2ème gauche, 1er centre, 3ème droite]
 const AVATAR_BG = ['#DC143C', '#228B22', '#DAA520', '#1a6eb5', '#8B4513'];
 
 function avatarColor(name: string) {
