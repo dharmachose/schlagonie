@@ -127,9 +127,10 @@ export default async function LivreOrPage() {
 
   const playerMap = new Map<string, { name: string; count: number; lastSeen: number }>();
   for (const t of tributes) {
-    const e = playerMap.get(t.playerId);
+    const key = t.playerName.toLowerCase().trim();
+    const e = playerMap.get(key);
     if (e) { e.count++; e.lastSeen = Math.max(e.lastSeen, t.answeredAt); }
-    else playerMap.set(t.playerId, { name: t.playerName, count: 1, lastSeen: t.answeredAt });
+    else playerMap.set(key, { name: t.playerName, count: 1, lastSeen: t.answeredAt });
   }
   const players = [...playerMap.values()].sort((a, b) => b.count - a.count);
 
