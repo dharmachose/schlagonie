@@ -91,9 +91,30 @@ export default function GamesPage() {
           {/* Level grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '7px' }}>
             {([1, 2, 3, 4, 5] as DifficultyLevel[]).map((lvl) => {
-              const done = isLevelCompleted(game.id, lvl);
-              const best = getBestTime(game.id, lvl);
-              return (
+              const done    = isLevelCompleted(game.id, lvl);
+              const locked  = lvl > 1 && !isLevelCompleted(game.id, (lvl - 1) as DifficultyLevel);
+              const best    = getBestTime(game.id, lvl);
+              return locked ? (
+                <div
+                  key={lvl}
+                  className="level-btn"
+                  style={{
+                    background: 'linear-gradient(145deg, var(--bg-card-deep), var(--bg-dark))',
+                    border: '2px solid var(--border-color)',
+                    color: 'var(--text-muted)',
+                    opacity: 0.4,
+                    cursor: 'not-allowed',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '34px', flexShrink: 0 }}>
+                    <span style={{ fontSize: '18px' }}>🔒</span>
+                  </div>
+                  <div style={{ fontSize: '10px', lineHeight: 1.2 }}>
+                    {LEVEL_LABELS[lvl].split(' ')[0]}
+                  </div>
+                  <div style={{ fontSize: '9px', height: '11px' }} />
+                </div>
+              ) : (
                 <Link
                   key={lvl}
                   href={`/games/${game.id}/${lvl}`}
@@ -116,7 +137,6 @@ export default function GamesPage() {
                   <div style={{ fontSize: '10px', fontWeight: done ? 700 : 400, lineHeight: 1.2 }}>
                     {LEVEL_LABELS[lvl].split(' ')[0]}
                   </div>
-                  {/* Toujours présent pour garder la hauteur uniforme */}
                   <div style={{ fontSize: '9px', opacity: 0.7, height: '11px', lineHeight: '11px' }}>
                     {best ? formatTime(best) : ''}
                   </div>
